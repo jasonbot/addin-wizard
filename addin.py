@@ -1,36 +1,75 @@
 import datetime
+import itertools
+import random
 import os
 import uuid
 import xml.etree.ElementTree
 
+def makeid(prefix="id"):
+    return "%s%05x" % (prefix, random.randint(1, 32000))
+
 class XMLSerializable(object):
     def xmlNode(self, parent_node):
-        raise NotImplementedError("Method not implemented for %r" % self.__class__)
+        raise NotImplementedError("Method not implemented for %r" % 
+                                                            self.__class__)
     @classmethod
     def fromNode(cls, node, id_cache=None):
         raise NotImplementedError("Method not implemented for %r" % cls)
 
 class UIControl(XMLSerializable):
     def refNode(self, parent):
-        return xml.etree.ElementTree.SubElement(self.__class__.__name__, 
+        return xml.etree.ElementTree.SubElement(parent,
+                                                self.__class__.__name__, 
                                                 {'refID': self.id})
 
 class ControlContainer(XMLSerializable):
     def __init__(self):
-        self._items = []
+        self.items = []
     def addItemsToNode(self, parent_node):
         elt = xml.etree.ElementTree.SubElement(parent_node, 'Items')
-        for item in self._items:
-            item.refNode(elt)
+        for item in self.items:
+            if hasattr(item, 'refNode'):
+                item.refNode(elt)
+            else:
+                item.xmlNode(elt)
+    def xmlNode(self, parent):
+        newnode = xml.etree.ElementTree.SubElement(parent, 
+                                                   self.__class__.__name__)
+        self.addItemsToNode(newnode)
 
-class Menu(UIControl, ControlContainer):
+class Menu(ControlContainer):
     pass
 
-class ToolBar(UIControl, ControlContainer):
-    pass
+class Toolbar(ControlContainer):
+    def __init__(self, id=None, caption=None):
+        self.id = id or makeid()
+        self.caption = caption
+        super(Toolbar, self).__init__()
+
+class Button(UIControl):
+    def __init__(self, caption, klass, category=None, image=None,
+                 tip=None, message=None, id=None):
+        self.caption = caption
+        self.klass = klass
+        self.category = category
+        self.image = image
+        self.tip = tip
+        self.message = message
+        self.id = id or makeid()
+    def xmlNode(self, parent):
+        return xml.etree.ElementTree.SubElement(parent,
+                                                self.__class__.__name__, 
+                                                {'caption': self.caption or '',
+                                                 'class': self.klass,
+                                                 'category': self.category or '',
+                                                 'image': self.image or '',
+                                                 'tip': self.tip or '',
+                                                 'message': self.message or '',
+                                                 'id': self.id})
 
 class PythonAddin(object):
-    def __init__(self, name, description, namespace, author='Untitled', company='Untitled', version='0.1', image='', app='ArcMap'):
+    def __init__(self, name, description, namespace, author='Untitled',
+                 company='Untitled', version='0.1', image='', app='ArcMap'):
         self.name = name
         self.description = description
         self.namespace = namespace
@@ -42,15 +81,22 @@ class PythonAddin(object):
         self.version = version
         self.image = image
         self.addinfile = self.namespace + '.py'
+        self.items = []
     @property
     def commands(self):
-        return []
+        ids = set()
+        for container in itertools.chain(self.menus, self.toolbars):
+            for item in container.items:
+                if isinstance(item, UIControl):
+                    if item.id not in ids:
+                        ids.add(item.id)
+                        yield item
     @property
     def menus(self):
-        return []
+        return [menu for menu in self.items if isinstance(menu, Menu)]
     @property
     def toolbars(self):
-        return []
+        return [toolbar for toolbar in self.items if isinstance(toolbar, Toolbar)]
     @property
     def extensions(self):
         return []
@@ -94,4 +140,7 @@ class PythonAddin(object):
 
 if __name__ == "__main__":
     myaddin = PythonAddin("My Addin", "This is my starting addin", "myaddin")
+    toolbar = Toolbar()
+    toolbar.items.append(Button("Hello there", "HelloButton"))
+    myaddin.items.append(toolbar)
     print myaddin.xml

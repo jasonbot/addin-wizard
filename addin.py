@@ -42,7 +42,7 @@ class Menu(ControlContainer):
 
 class Toolbar(ControlContainer):
     def __init__(self, id=None, caption=None):
-        self.id = id or makeid()
+        self.id = id or makeid("toolbar")
         self.caption = caption
         super(Toolbar, self).__init__()
 
@@ -55,7 +55,7 @@ class Button(UIControl):
         self.image = image
         self.tip = tip
         self.message = message
-        self.id = id or makeid()
+        self.id = id or makeid("button")
     def xmlNode(self, parent):
         return xml.etree.ElementTree.SubElement(parent,
                                                 self.__class__.__name__, 

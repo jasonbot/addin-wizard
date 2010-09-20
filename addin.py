@@ -138,8 +138,17 @@ class PythonAddin(object):
             meni.xmlNode(menunode)
         return xml.etree.ElementTree.tostring(root).encode("utf-8")
 
+class PythonAddinProjectDirectory(object):
+    def __init__(self, path):
+        if not os.path.exists(path):
+            raise IOError("{0} does not exist. Please select a directory that exists.".format(path))
+        if os.listdir(path):
+            raise ValueError("{0} is not empty. Please select an empty directory to host this new addin.".format(path))
+        self._path = path
+        self.addin = PythonAddin("Python Addin", "New Addin", os.path.basename(path) + "_addin")
+
 if __name__ == "__main__":
-    myaddin = PythonAddin("My Addin", "This is my starting addin", "myaddin")
+    myaddin = PythonAddin("My Addin", "This is a new addin", "myaddin")
     toolbar = Toolbar()
     toolbar.items.append(Button("Hello there", "HelloButton"))
     myaddin.items.append(toolbar)

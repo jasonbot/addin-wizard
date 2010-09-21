@@ -13,6 +13,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
         pass
     def __init__(self, *args, **kws):
         super(AddinMakerAppWindow, self).__init__(*args, **kws)
+        self.Bind(wx.EVT_CLOSE, self.OnClose)
         self.contents_tree.Bind(wx.EVT_RIGHT_DOWN, self.TreePopupRClick)
         self.contents_tree.Bind(wx.EVT_CONTEXT_MENU, self.TreePopup)
         self.SelectFolder(None)
@@ -35,6 +36,10 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
         self.project_company.SetLabel(self.project.addin.company)
         self.project_description.SetLabel(self.project.addin.description)
         self.project_author.SetLabel(self.project.addin.author)
+    def OnClose(self, event):
+        if self.save_button.IsEnabled():
+            self.SaveProject(event)
+        self.Destroy()
     def SelectFolder(self, event):
         dlg = wx.DirDialog(self, "Choose a directory to use as an AddIn project root", 
                            style=wx.DD_DEFAULT_STYLE)

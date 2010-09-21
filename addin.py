@@ -137,6 +137,9 @@ class PythonAddin(object):
         for menu in self.menus:
             meni.xmlNode(menunode)
         return xml.etree.ElementTree.tostring(root).encode("utf-8")
+    @property
+    def python(self):
+        return repr("TODO: Implement")
 
 class PythonAddinProjectDirectory(object):
     def __init__(self, path):

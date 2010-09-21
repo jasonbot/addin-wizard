@@ -5,8 +5,15 @@ import sys
 import wx
 
 class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
+    class _extensiontoplevel(object):
+        pass
+    class _menutoplevel(object):
+        pass
+    class _toolbartoplevel(object):
+        pass
     def __init__(self, *args, **kws):
         super(AddinMakerAppWindow, self).__init__(*args, **kws)
+        self.contents_tree.Bind(wx.EVT_RIGHT_DOWN, self.TreePopupRClick)
         self.contents_tree.Bind(wx.EVT_CONTEXT_MENU, self.TreePopup)
         self.SelectFolder(None)
     def loadProject(self):
@@ -14,8 +21,11 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
         self.contents_tree.DeleteAllItems()
         self.treeroot = self.contents_tree.AddRoot("Root")
         self.extensionsroot = self.contents_tree.AppendItem(self.treeroot, "EXTENSIONS")
+        self.contents_tree.SetItemPyData(self.extensionsroot, self._extensiontoplevel)
         self.menusroot = self.contents_tree.AppendItem(self.treeroot, "MENUS")
+        self.contents_tree.SetItemPyData(self.menusroot, self._menutoplevel)
         self.toolbarsroot = self.contents_tree.AppendItem(self.treeroot, "TOOLBARS")
+        self.contents_tree.SetItemPyData(self.toolbarsroot, self._toolbartoplevel)
         self.contents_tree.SetItemBold(self.extensionsroot, True)
         self.contents_tree.SetItemBold(self.menusroot, True)
         self.contents_tree.SetItemBold(self.toolbarsroot, True)
@@ -52,18 +62,22 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
             self.project_name.SetLabel(self.project.addin.name)
         else:
             self.project.addin.name = newvalue
+        self.save_button.Enable(True)
         event.Skip()
     def ProjectCompanyText(self, event):
         newvalue = self.project_company.GetLabel()
         self.project.addin.company = newvalue
+        self.save_button.Enable(True)
         event.Skip()
     def ProjectDescriptionText(self, event):
         newvalue = self.project_description.GetLabel()
         self.project.addin.description = newvalue
+        self.save_button.Enable(True)
         event.Skip()
     def ProjectAuthorText(self, event):
         newvalue = self.project_author.GetLabel()
         self.project.addin.author = newvalue
+        self.save_button.Enable(True)
         event.Skip()
     def ProjectVersionText(self, event):
         newvalue = self.project_version.GetLabel()
@@ -71,9 +85,19 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
             self.project_version.SetLabel(self.project.addin.version)
         else:
             self.project.addin.version = newvalue
+        self.save_button.Enable(True)
         event.Skip()
     def ComboBox(self, event):
-         self.project.addin.app = self.product_combo_box.GetValue()
+        self.project.addin.app = self.product_combo_box.GetValue()
+        self.save_button.Enable(True)
+        event.Skip()
+    def SelChanged(self, event):
+        try:
+            self._selected_data = self.contents_tree.GetItemPyData(self.contents_tree.GetSelection())
+        except:
+            self._selected_data = None
+    def ChangeTab(self, event):
+        pass
     def SelectProjectImage(self, event):
         dlg = wx.FileDialog(
             self, message="Choose an image file",
@@ -92,14 +116,32 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
             bitmap = wx.Bitmap(image_file, wx.BITMAP_TYPE_ANY)
             self.icon_bitmap.SetBitmap(bitmap)
             self.Layout()
+            self.SetSize(self.GetSize())
             self.Refresh()
+        self.save_button.Enable(True)
+        event.Skip()
+    def SaveProject(self, event):
+        self.save_button.Enable(False)
+    def TreePopupRClick(self, event):
+        id = self.contents_tree.HitTest(event.GetPosition())[0]
+        self.contents_tree.ToggleItemSelection(id)
     def TreePopup(self, event):
-        print self.contents_tree.GetSelection()
-        menu = wx.Menu()
-        menu.Append(wx.NewId(), "One")
-        menu.Append(wx.NewId(), "Two")
-        self.PopupMenu(menu)
-        menu.Destroy()
+        menu = None
+        sd = self._selected_data
+        if sd is self._extensiontoplevel:
+            print "EXTN MENU"
+        elif sd is self._menutoplevel:
+            print "MENU MENU"
+        elif sd is self._toolbartoplevel:
+            print "TOOLBAR MENU"
+        else:
+            print sd
+        #menu = wx.Menu()
+        #menu.Append(wx.NewId(), "One")
+        #menu.Append(wx.NewId(), "Two")
+        if menu:
+            self.PopupMenu(menu)
+            menu.Destroy()
 
 if __name__ == "__main__":
     app = wx.PySimpleApp(0)

@@ -135,8 +135,10 @@ class Toolbar(ControlContainer):
     "Toolbar"
     __attr_map__ = {'caption': 'caption',
                     'category': 'category',
+                    'id': 'id',
                     'showInitially': 'show_initially'}
     def __init__(self, id=None, caption=None, category=None, show_initially=True):
+        self.id = id or makeid("toolbar")
         self.caption = caption or 'Toolbar'
         self.category = category or ''
         self.show_initially = bool(show_initially)
@@ -323,7 +325,7 @@ class PythonAddin(object):
                 yield aitem
     @property
     def python(self):
-        return "\n\n".join(x.python for x in self if hasattr(x, 'python'))
+        return "import arcpy\n\n" + "\n\n".join(x.python for x in self if hasattr(x, 'python'))
 
 class PythonAddinProjectDirectory(object):
     def __init__(self, path):

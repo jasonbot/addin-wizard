@@ -157,6 +157,7 @@ class Toolbar(ControlContainer):
 class Button(UIControl, XMLAttrMap):
     "Button"
     __python_methods__ = [('onClick', ['self'])]
+    __init_code__ = ['self.enabled = True', 'self.checked = False']
     __attr_map__ = {'caption': 'caption' ,
                     'class': 'klass',
                     'category': 'category',
@@ -217,6 +218,7 @@ class Tool(Button):
         self.caption = caption or 'Tool'
         self.klass = klass or makeid("ToolClass")
         self.id = id or makeid("tool")
+        self.image = image or ''
 
 class MultiItem(UIControl, XMLAttrMap):
     "MultiItem"
@@ -280,7 +282,7 @@ class PythonAddin(object):
         return [toolbar for toolbar in self.items if isinstance(toolbar, Toolbar)]
     @property
     def extensions(self):
-        return []
+        return [extension for extension in self.items if isinstance(extension, Extension)]
     @property
     def xml(self):
         root = xml.etree.ElementTree.Element('ESRI.Configuration',

@@ -114,13 +114,15 @@ class Menu(ControlContainer):
                     'isRootMenu': 'top_level',
                     'isShortcutMenu': 'shortcut_menu',
                     'separator': 'separator',
-                    'category': 'category'}
-    def __init__(self, caption='Menu', top_level=False, shortcut_menu=False, separator=False, category=None):
+                    'category': 'category',
+                    'id': 'id'}
+    def __init__(self, caption='Menu', top_level=False, shortcut_menu=False, separator=False, category=None, id=None):
         self.caption = caption or ''
         self.top_level = bool(top_level)
         self.shortcut_menu = bool(shortcut_menu)
         self.separator = bool(separator)
         self.category = category or ''
+        self.id = id or makeid("menuitem")
         super(Menu, self).__init__()
 
 class ToolPalette(ControlContainer):

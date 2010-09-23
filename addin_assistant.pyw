@@ -206,42 +206,54 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
             st.SetFont(wx.Font(16, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
             sizer.Add(st, 0, wx.ALL, 8)
         pythonliteral = re.compile("^[_A-Za-z][_A-Za-z0-9]*$").match
+        def isinteger(val):
+            try:
+                int(val)
+                return True
+            except:
+                return False
         proplist = [p for p in (('caption', 'Caption', str, None), 
                                 ('klass', 'Class Name', str, pythonliteral), 
                                 ('id', 'ID (Variable Name)', str, pythonliteral),
                                 ('category', 'Category', str, None),
                                 ('description', 'Description', str, None),
+                                ('message', 'Message', str, None),
                                 ('separator', 'Has Separator', bool, None),
+                                ('show_initially', 'Show Initially', bool, None),
+                                ('tearoff', 'Can Tear Off', bool, None),
+                                ('menu_style', 'Menu Style', bool, None),
+                                ('columns', 'Column Count', str, isinteger),
                                 ('image', 'Image for Control', None, None)) 
                                     if hasattr(self._selected_data, p[0])]
         for prop, caption, datatype, validator in proplist:
             newsizer = wx.BoxSizer(wx.HORIZONTAL)
-            if datatype is str:
+            if datatype in (str, int):
                 st = wx.StaticText(self.item_property_panel, -1, caption + ":", style=wx.ALIGN_RIGHT)
                 st.SetMinSize((100, 16))
                 newsizer.Add(st, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 2)
-                text = wx.TextCtrl(self.item_property_panel, -1, getattr(self._selected_data, prop, '') or '')
+                text = wx.TextCtrl(self.item_property_panel, -1, str(getattr(self._selected_data, prop, '')) or '')
                 class edittext(object):
-                    def __init__(self, edit_object, command, app, propname, validator):
+                    def __init__(self, edit_object, command, app, propname, validator, datatype):
                         self.edit_object = edit_object
                         self.command = command
                         self.app = app
                         self.propname = propname
                         self.validator = validator
+                        self.datatype = datatype
                     def __call__(self, event):
                         newvalue = self.command.GetLabel()
                         if self.validator is None or self.validator(newvalue):
                             try:
-                                setattr(self.edit_object, self.propname, newvalue)
+                                setattr(self.edit_object, self.propname, self.datatype(newvalue))
                             except Exception as e:
                                 print e
                             self.app.contents_tree.SetItemText(self.app.contents_tree.GetSelection(), self.edit_object.caption)
                             self.app.save_button.Enable(True)
                         else:
-                            self.command.SetLabel(getattr(self.edit_object, self.propname, ''))
+                            self.command.SetLabel(str(getattr(self.edit_object, self.propname, '')))
                         event.Skip()
-                self.Bind(wx.EVT_TEXT, edittext(self._selected_data, text, self, prop, validator), text)
-                newsizer.Add(text, 1, wx.ALL, 0)
+                self.Bind(wx.EVT_TEXT, edittext(self._selected_data, text, self, prop, validator, datatype), text)
+                newsizer.Add(text, 1, wx.RIGHT, 8)
             elif datatype is bool:
                 class toggle(object):
                     def __init__(self, edit_object, propname, control, app):
@@ -294,10 +306,14 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
         self.save_button.Enable(True)
         event.Skip()
     def SaveProject(self, event):
-        print self.project.addin.xml
-        print
-        print self.project.addin.python
-        self.save_button.Enable(False)
+        try:
+            print self.project.addin.xml
+            print
+            print self.project.addin.python
+            self.project.save()
+            self.save_button.Enable(False)
+        except Exception as e:
+            print e
     def TreePopupRClick(self, event):
         id = self.contents_tree.HitTest(event.GetPosition())[0]
         self.contents_tree.SelectItem(id, True) # Set right-clicked item as selection for popups

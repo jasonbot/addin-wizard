@@ -133,9 +133,13 @@ class ToolPalette(ControlContainer):
 
 class Toolbar(ControlContainer):
     "Toolbar"
-    __attr_map__ = {'caption': 'caption'}
-    def __init__(self, id=None, caption=None):
+    __attr_map__ = {'caption': 'caption',
+                    'category': 'category',
+                    'showInitially': 'show_initially'}
+    def __init__(self, id=None, caption=None, category=None, show_initially=True):
         self.caption = caption or 'Toolbar'
+        self.category = category or ''
+        self.show_initially = bool(show_initially)
         super(Toolbar, self).__init__()
 
 class Button(UIControl, XMLAttrMap):
@@ -147,7 +151,8 @@ class Button(UIControl, XMLAttrMap):
                     'image': 'image' ,
                     'tip': 'tip' ,
                     'message': 'message' ,
-                    'id': 'id'}
+                    'id': 'id',
+                    'message': 'message'}
     def __init__(self, caption=None, klass=None, category=None, image=None,
                  tip=None, message=None, id=None):
         self.caption = caption or "Button"
@@ -155,7 +160,7 @@ class Button(UIControl, XMLAttrMap):
         self.category = category or ''
         self.image = image or ''
         self.tip = tip or ''
-        self.message = message
+        self.message = message or ''
         self.id = id or makeid("button")
     def xmlNode(self, parent):
         newnode = xml.etree.ElementTree.SubElement(parent,
@@ -208,10 +213,11 @@ class MultiItem(UIControl, XMLAttrMap):
                     'hasSeparator': 'separator'}
     __python_methods__ = [('onItemClick', ['self'])]
     __init_code__ = ['self.items = ["item1", "item2"]']
-    def __init__(self, klass=None, id=None):
+    def __init__(self, klass=None, id=None, separator=None):
         self.klass = klass or makeid("MultiItemClass")
         self.id = id or makeid("multi_item")
         self.caption = 'MultiItem'
+        self.separator = bool(separator)
     def xmlNode(self, parent):
         newnode = xml.etree.ElementTree.SubElement(parent,
                                                 self.__class__.__name__)
@@ -305,7 +311,8 @@ class PythonAddin(object):
             yield item
             if hasattr(item, 'items'):
                 for item_ in item.items:
-                    yield item_
+                    for item__ in ls_(item_):
+                        yield item__
         for bitem in self.items:
             for aitem in ls_(bitem):
                 yield aitem
@@ -321,6 +328,17 @@ class PythonAddinProjectDirectory(object):
             raise ValueError("{0} is not empty. Please select an empty directory to host this new addin.".format(path))
         self._path = path
         self.addin = PythonAddin("Python Addin", "New Addin", os.path.basename(path) + "_addin")
+    def save(self):
+        install_dir = os.path.join(self._path, 'Install')
+        images_dir = os.path.join(self._path, 'Images')
+        if not os.path.exists(install_dir):
+            os.mkdir(install_dir)
+        if not os.path.exists(images_dir):
+            os.mkdir(images_dir)
+        with open(os.path.join(self._path, 'config.xml'), 'wb') as out_handle:
+            out_handle.write(self.addin.xml)
+        with open(os.path.join(install_dir, self.addin.addinfile), 'wb') as out_python:
+            out_python.write(self.addin.python)
 
 if __name__ == "__main__":
     myaddin = PythonAddin("My Addin", "This is a new addin", "myaddin")

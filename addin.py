@@ -319,7 +319,7 @@ class PythonAddin(object):
         #menunode = xml.etree.ElementTree.SubElement(appnode, 'Menus')
         #for menu in self.menus:
         #    menu.xmlNode(menunode)
-        menunode.tail = "\n"
+        #menunode.tail = "\n"
         return xml.etree.ElementTree.tostring(root).encode("utf-8")
     def __iter__(self):
         def ls_(item):
@@ -350,9 +350,12 @@ class PythonAddinProjectDirectory(object):
             os.mkdir(install_dir)
         if not os.path.exists(images_dir):
             os.mkdir(images_dir)
+        # Auto-category
         for item in self.addin:
             if hasattr(item, 'category'):
                 item.category = self.addin.name or self.addin.description
+        # Consolidate images
+
         with open(os.path.join(self._path, 'config.xml'), 'wb') as out_handle:
             out_handle.write(self.addin.xml)
         with open(os.path.join(install_dir, self.addin.addinfile), 'wb') as out_python:

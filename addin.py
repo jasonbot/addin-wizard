@@ -307,23 +307,25 @@ class PythonAddin(object):
         appnode.tail = "\n    "
         appnode.text = "\n        "
         commandnode = xml.etree.ElementTree.SubElement(appnode, 'Commands')
+        commandnode.text = " "
         for command in self.commands:
             command.xmlNode(commandnode)
-        for menu in self.menus:
-            menu.xmlNode(commandnode)
         commandnode.tail = "\n        "
         extensionnode = xml.etree.ElementTree.SubElement(appnode, 'Extensions')
+        extensionnode.text = " "
         for extension in self.extensions:
             extension.xmlNode(extensionnode)
         extensionnode.tail = "\n        "
         toolbarnode = xml.etree.ElementTree.SubElement(appnode, 'Toolbars')
+        toolbarnode.text = " "
         for toolbar in self.toolbars:
             toolbar.xmlNode(toolbarnode)
         toolbarnode.tail = "\n        "
-        #menunode = xml.etree.ElementTree.SubElement(appnode, 'Menus')
-        #for menu in self.menus:
-        #    menu.xmlNode(menunode)
-        #menunode.tail = "\n"
+        menunode = xml.etree.ElementTree.SubElement(appnode, 'Menus')
+        menunode.text = " "
+        for menu in self.menus:
+            menu.xmlNode(menunode)
+        menunode.tail = "\n"
         return xml.etree.ElementTree.tostring(root).encode("utf-8")
     def __iter__(self):
         def ls_(item):

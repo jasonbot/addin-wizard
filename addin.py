@@ -5,8 +5,12 @@ import os
 import uuid
 import xml.etree.ElementTree
 
-def makeid(prefix="id"):
-    return "%s%05x" % (prefix, random.randint(1, 32000))
+def makeid(prefix="id", seen=set()):
+    myint = 1
+    while myint in seen:
+        myint += 1
+    seen.add(myint)
+    return "%s%05x" % (prefix, myint)
 
 class XMLSerializable(object):
     def xmlNode(self, parent_node):
@@ -16,13 +20,77 @@ class XMLSerializable(object):
     def fromNode(cls, node, id_cache=None):
         raise NotImplementedError("Method not implemented for %r" % cls)
 
-class UIControl(XMLSerializable):
+class XMLAttrMap(object):
+    def addAttrMap(self, node):
+        if hasattr(self, '__attr_map__'):
+            for attr_node, attr_name in self.__attr_map__.iteritems():
+                value = getattr(self, attr_name, '')
+                if isinstance(value, bool):
+                    value = str(value).lower()
+                else:
+                    value = str(value)
+                node.attrib[attr_node] = value
+
+class HasPython(object):
+    @property
+    def python(self):
+        methods = getattr(self, '__python_methods__', [])
+        method_string = "\n".join(
+            "    def {0}({1}):\n        pass".format(method, ", ".join(args))
+                for method, args in methods
+        )
+        init_code = getattr(self, '__init_code__', '')
+        if init_code:
+            method_string = "    def __init__(self):\n{0}\n{1}".format(
+                    "\n".join("        "+ line 
+                        for line in init_code), 
+                    method_string)
+        if not method_string:
+            method_string = "    pass"
+        return "class {0}(object):\n{1}".format(self.klass, method_string)
+
+class UIControl(XMLSerializable, HasPython):
     def refNode(self, parent):
         return xml.etree.ElementTree.SubElement(parent,
                                                 self.__class__.__name__, 
                                                 {'refID': self.id})
 
-class ControlContainer(XMLSerializable):
+class Extension(XMLSerializable, XMLAttrMap, HasPython):
+    "Extension"
+    __attr_map__ = {'name': 'caption',
+                    'description': 'description',
+                    'class': 'klass',
+                    'id': 'id'}
+    __python_methods__ = [('startup', ['self']),
+                          ('shutdown', ['self']),
+                          ('activeViewChanged', ['self']),
+                          ('mapsChanged', ['self']),
+                          ('newDocument', ['self']),
+                          ('openDocument', ['self']),
+                          ('beforeCloseDocument', ['self']),
+                          ('closeDocument', ['self']),
+                          ('beforePageIndexExtentChange', ['self', 'old_id']),
+                          ('pageIndexExtentChanged', ['self', 'new_id']),
+                          ('contentsChanged', ['self']),
+                          ('contentsCleared', ['self']),
+                          ('focusMapChanged', ['self']),
+                          ('spatialReferenceChanged', ['self']),
+                          ]
+    def __init__(self, name=None, description=None, klass=None, id=None):
+        self.caption = name or 'New Extension'
+        self.description = description or ''
+        self.klass = klass or makeid("ExtensionClass")
+        self.id = id or makeid("extension")
+    def xmlNode(self, parent):
+        newnode = xml.etree.ElementTree.SubElement(parent, 
+                                                   self.__class__.__name__)
+        self.addAttrMap(newnode)
+        return newnode
+    @property
+    def name(self):
+        return self.caption
+
+class ControlContainer(XMLSerializable, XMLAttrMap):
     def __init__(self):
         self.items = []
     def addItemsToNode(self, parent_node):
@@ -35,37 +103,120 @@ class ControlContainer(XMLSerializable):
     def xmlNode(self, parent):
         newnode = xml.etree.ElementTree.SubElement(parent, 
                                                    self.__class__.__name__)
+        self.addAttrMap(newnode)
         self.addItemsToNode(newnode)
 
 class Menu(ControlContainer):
-    pass
+    "Menu"
+    __attr_map__ = {'caption': 'caption', 
+                    'isRootMenu': 'top_level',
+                    'isShortcutMenu': 'shortcut_menu',
+                    'separator': 'separator'}
+    def __init__(self, caption='Menu', top_level=False, shortcut_menu=False, separator=False):
+        self.caption = caption or ''
+        self.top_level = bool(top_level)
+        self.shortcut_menu = bool(shortcut_menu)
+        self.separator = bool(separator)
+        super(Menu, self).__init__()
+
+class ToolPalette(ControlContainer):
+    "Tool Palette"
+    __attr_map__ = {'columns': 'columns',
+                    'canTearOff': 'tearoff',
+                    'isMenuStyle': 'menu_style'}
+    def __init__(self, caption=None, columns=2, tearoff=False, menu_style=False):
+        self.caption = caption or 'Palette'
+        self.columns = columns
+        self.tearoff = bool(tearoff)
+        self.menu_style = bool(menu_style)
+        super(ToolPalette, self).__init__()
 
 class Toolbar(ControlContainer):
+    "Toolbar"
+    __attr_map__ = {'caption': 'caption'}
     def __init__(self, id=None, caption=None):
-        self.id = id or makeid("toolbar")
-        self.caption = caption
+        self.caption = caption or 'Toolbar'
         super(Toolbar, self).__init__()
 
-class Button(UIControl):
-    def __init__(self, caption, klass, category=None, image=None,
+class Button(UIControl, XMLAttrMap):
+    "Button"
+    __python_methods__ = [('onClick', ['self'])]
+    __attr_map__ = {'caption': 'caption' ,
+                    'class': 'klass',
+                    'category': 'category',
+                    'image': 'image' ,
+                    'tip': 'tip' ,
+                    'message': 'message' ,
+                    'id': 'id'}
+    def __init__(self, caption=None, klass=None, category=None, image=None,
                  tip=None, message=None, id=None):
-        self.caption = caption
-        self.klass = klass
-        self.category = category
-        self.image = image
-        self.tip = tip
+        self.caption = caption or "Button"
+        self.klass = klass or makeid("ButtonClass")
+        self.category = category or ''
+        self.image = image or ''
+        self.tip = tip or ''
         self.message = message
         self.id = id or makeid("button")
     def xmlNode(self, parent):
-        return xml.etree.ElementTree.SubElement(parent,
-                                                self.__class__.__name__, 
-                                                {'caption': self.caption or '',
-                                                 'class': self.klass,
-                                                 'category': self.category or '',
-                                                 'image': self.image or '',
-                                                 'tip': self.tip or '',
-                                                 'message': self.message or '',
-                                                 'id': self.id})
+        newnode = xml.etree.ElementTree.SubElement(parent,
+                                                self.__class__.__name__)
+        self.addAttrMap(newnode)
+        return newnode
+
+class ComboBox(Button):
+    "Combo Box"
+    __attr_map__ = {'caption': 'caption',
+                    'category': 'category',
+                    'id': 'id',
+                    'class': 'klass'}
+    __init_code__ = ['self.items = ["item1", "item2"]', 'self.editable = True']
+    __python_methods__ = [('onSelChange',  ['self', 'selection']),
+                          ('onEditChange', ['self', 'text']),
+                          ('onFocus', ['self', 'focused']),
+                          ('onEnter', ['self'])
+                         ]
+    def __init__(self, klass=None, id=None, category=None, caption=None):
+        self.klass = klass or makeid("ComboBoxClass")
+        self.id = id or makeid("combo_box")
+        self.category = category or ''
+        self.caption = caption or "ComboBox"
+
+class Tool(Button):
+    "Python Tool"
+    __python_methods__ = [('onMouseDown', ['self', 'x', 'y', 'button', 'shift']),
+                          ('onMouseDownMap', ['self', 'x', 'y', 'button', 'shift']),
+                          ('onMouseUp', ['self', 'x', 'y', 'button', 'shift']),
+                          ('onMouseUpMap', ['self', 'x', 'y', 'button', 'shift']),
+                          ('onMouseMove', ['self', 'x', 'y', 'button', 'shift']),
+                          ('onMouseMoveMap', ['self', 'x', 'y', 'button', 'shift']),
+                          ('onDblClick', ['self']),
+                          ('onKeyDown', ['self', 'keycode', 'shift']),
+                          ('onKeyUp', ['self', 'keycode', 'shift']),
+                          ('deactivate', ['self'])
+                          ]
+    def __init__(self, caption=None, klass=None, category=None, image=None,
+                 tip=None, message=None, id=None):
+        super(Tool, self).__init__(caption, klass, category, image, tip, message, id)
+        self.caption = caption or 'Tool'
+        self.klass = klass or makeid("ToolClass")
+        self.id = id or makeid("tool")
+
+class MultiItem(UIControl, XMLAttrMap):
+    "MultiItem"
+    __attr_map__ = {'id': 'id',
+                    'class': 'klass',
+                    'hasSeparator': 'separator'}
+    __python_methods__ = [('onItemClick', ['self'])]
+    __init_code__ = ['self.items = ["item1", "item2"]']
+    def __init__(self, klass=None, id=None):
+        self.klass = klass or makeid("MultiItemClass")
+        self.id = id or makeid("multi_item")
+        self.caption = 'MultiItem'
+    def xmlNode(self, parent):
+        newnode = xml.etree.ElementTree.SubElement(parent,
+                                                self.__class__.__name__)
+        self.addAttrMap(newnode)
+        return newnode
 
 class PythonAddin(object):
     def __init__(self, name, description, namespace, author='Untitled',
@@ -82,6 +233,18 @@ class PythonAddin(object):
         self.image = image
         self.addinfile = self.namespace + '.py'
         self.items = []
+    def remove(self, target_item):
+        def rm_(container_object, target_item):
+            items = getattr(container_object, 'items', [])
+            if target_item in items:
+                container_object.items.pop(container_object.items.index(target_item))
+                return True
+            else:
+                for item in (i for i in items if isinstance(i, ControlContainer)):
+                    if rm_(item, target_item):
+                        return True
+            return False
+        return rm_(self, target_item)
     @property
     def commands(self):
         ids = set()
@@ -135,11 +298,20 @@ class PythonAddin(object):
             toolbar.xmlNode(toolbarnode)
         menunode = xml.etree.ElementTree.SubElement(appnode, 'Menus')
         for menu in self.menus:
-            meni.xmlNode(menunode)
+            menu.xmlNode(menunode)
         return xml.etree.ElementTree.tostring(root).encode("utf-8")
+    def __iter__(self):
+        def ls_(item):
+            yield item
+            if hasattr(item, 'items'):
+                for item_ in item.items:
+                    yield item_
+        for bitem in self.items:
+            for aitem in ls_(bitem):
+                yield aitem
     @property
     def python(self):
-        return repr("TODO: Implement")
+        return "\n\n".join(x.python for x in self if hasattr(x, 'python'))
 
 class PythonAddinProjectDirectory(object):
     def __init__(self, path):

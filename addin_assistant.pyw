@@ -1,24 +1,121 @@
 import addin
 import addin_ui
 import os
+import re
 import sys
 import wx
 
 class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
+    # Sentinel/singletons for the treeview
     class _extensiontoplevel(object):
+        "Extensions"
         pass
     class _menutoplevel(object):
+        "Toplevel Menus"
         pass
     class _toolbartoplevel(object):
+        "Toolbars"
         pass
     def __init__(self, *args, **kws):
         super(AddinMakerAppWindow, self).__init__(*args, **kws)
         self.Bind(wx.EVT_CLOSE, self.OnClose)
+
+        self._selected_data = None
         self.contents_tree.Bind(wx.EVT_RIGHT_DOWN, self.TreePopupRClick)
         self.contents_tree.Bind(wx.EVT_CONTEXT_MENU, self.TreePopup)
         self.SelectFolder(None)
-    def loadProject(self):
-        # Repopulate the tree view control et al with settings from the loaded project
+
+        self._newextensionid = wx.NewId()
+        self._newmenuid = wx.NewId()
+        self._newtoolbarid = wx.NewId()
+
+    def AddExtension(self, event):
+        extension = addin.Extension()
+        self.project.addin.items.append(extension)
+        menuitem = self.contents_tree.AppendItem(self.extensionsroot, extension.name)
+        self.contents_tree.SetItemPyData(menuitem, extension)
+        self.contents_tree.SelectItem(menuitem, True)
+
+    def AddMenu(self, event):
+        menu = addin.Menu("Menu", self._selected_data is self._menutoplevel)
+        self.project.addin.items.append(menu)
+        menuitem = self.contents_tree.AppendItem(self.menusroot, menu.caption)
+        self.contents_tree.SetItemPyData(menuitem, menu)
+        self.contents_tree.SelectItem(menuitem, True)
+
+    def AddToolbar(self, event):
+        toolbar = addin.Toolbar()
+        self.project.addin.items.append(toolbar)
+        toolbaritem = self.contents_tree.AppendItem(self.toolbarsroot, toolbar.caption)
+        self.contents_tree.SetItemPyData(toolbaritem, toolbar)
+        self.contents_tree.SelectItem(toolbaritem, True)
+
+    @property
+    def extensionmenu(self):
+        extensionmenu = wx.Menu()
+        cmd = extensionmenu.Append(self._newextensionid, "New Extension")
+        extensionmenu.Bind(wx.EVT_MENU, self.AddExtension, cmd)
+        return extensionmenu
+
+    @property
+    def menumenu(self):
+        menumenu = wx.Menu()
+        cmd = menumenu.Append(self._newmenuid, "New Menu")
+        menumenu.Bind(wx.EVT_MENU, self.AddMenu, cmd)
+        return menumenu
+
+    @property
+    def toolbarmenu(self):
+        toolbarmenu = wx.Menu()
+        cmd = toolbarmenu.Append(self._newtoolbarid, "New Toolbar")
+        toolbarmenu.Bind(wx.EVT_MENU, self.AddToolbar, cmd)
+        return toolbarmenu
+
+    @property
+    def controlcontainermenu(self):
+        class ItemAppender(object):
+            def __init__(self, tree, selection, item, cls, save_button):
+                self.tree = tree
+                self.selection = selection
+                self.item = item
+                self.cls = cls
+                self.save_button = save_button
+            def __call__(self, event):
+                try:
+                    new_item = self.cls()
+                    self.item.items.append(new_item)
+                    toolbaritem = self.tree.AppendItem(self.selection, getattr(new_item, 'caption', str(new_item)))
+                    self.tree.SetItemPyData(toolbaritem, new_item)
+                    self.tree.SelectItem(toolbaritem, True)
+                    self.save_button.Enable(True)
+                except Exception as e:
+                    print e
+
+        tree = self.contents_tree
+        selection = self.contents_tree.GetSelection()
+        item = self._selected_data
+
+        controlcontainermenu = wx.Menu()
+        buttoncmd = controlcontainermenu.Append(-1, "New Button")
+        controlcontainermenu.Bind(wx.EVT_MENU, ItemAppender(tree, selection, item, addin.Button, self.save_button), buttoncmd)
+        toolcmd = controlcontainermenu.Append(-1, "New Tool")
+        controlcontainermenu.Bind(wx.EVT_MENU, ItemAppender(tree, selection, item, addin.Tool, self.save_button), toolcmd)
+        if not isinstance(item, addin.ToolPalette):
+            menucmd = controlcontainermenu.Append(-1, "New Menu")
+            controlcontainermenu.Bind(wx.EVT_MENU, ItemAppender(tree, selection, item, addin.Menu, self.save_button), menucmd)
+        if isinstance(item, addin.Menu):
+            multiitemcmd = controlcontainermenu.Append(-1, "New MultiItem")
+            controlcontainermenu.Bind(wx.EVT_MENU, ItemAppender(tree, selection, item, addin.MultiItem, self.save_button), multiitemcmd)
+        if not isinstance(item, (addin.ToolPalette, addin.Menu)):
+            palettecmd = controlcontainermenu.Append(-1, "New Tool Palette")
+            controlcontainermenu.Bind(wx.EVT_MENU, ItemAppender(tree, selection, item, addin.ToolPalette, self.save_button), palettecmd)
+        if isinstance(item, addin.Toolbar):
+            comboboxcmd = controlcontainermenu.Append(-1, "New Combo Box")
+            controlcontainermenu.Bind(wx.EVT_MENU, ItemAppender(tree, selection, item, addin.ComboBox, self.save_button), comboboxcmd)
+        return controlcontainermenu
+
+    def loadTreeView(self):
+        # Set up treeview control
         self.contents_tree.DeleteAllItems()
         self.treeroot = self.contents_tree.AddRoot("Root")
         self.extensionsroot = self.contents_tree.AppendItem(self.treeroot, "EXTENSIONS")
@@ -31,17 +128,22 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
         self.contents_tree.SetItemBold(self.menusroot, True)
         self.contents_tree.SetItemBold(self.toolbarsroot, True)
 
+    def loadProject(self):
+        # Repopulate the tree view control et al with settings from the loaded project
+        self.loadTreeView()
+        # Set up metadata text entry
         self.project_name.SetLabel(self.project.addin.name)
         self.project_version.SetLabel(self.project.addin.version)
         self.project_company.SetLabel(self.project.addin.company)
         self.project_description.SetLabel(self.project.addin.description)
         self.project_author.SetLabel(self.project.addin.author)
+
     def OnClose(self, event):
         if self.save_button.IsEnabled():
             self.SaveProject(event)
         self.Destroy()
     def SelectFolder(self, event):
-        dlg = wx.DirDialog(self, "Choose a directory to use as an AddIn project root", 
+        dlg = wx.DirDialog(self, "Choose a directory to use as an AddIn project root:", 
                            style=wx.DD_DEFAULT_STYLE)
         dlg.SetPath(wx.StandardPaths.Get().GetDocumentsDir())
         if dlg.ShowModal() == wx.ID_OK:
@@ -96,11 +198,78 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
         self.project.addin.app = self.product_combo_box.GetValue()
         self.save_button.Enable(True)
         event.Skip()
+    def setupPropsDialog(self):
+        sizer = self.item_property_panel.GetSizer()
+        sizer.Clear(True)
+        if hasattr(self._selected_data, '__doc__') and self._selected_data.__doc__:
+            st = wx.StaticText(self.item_property_panel, -1, str(self._selected_data.__doc__))
+            st.SetFont(wx.Font(16, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
+            sizer.Add(st, 0, wx.ALL, 8)
+        pythonliteral = re.compile("^[_A-Za-z][_A-Za-z0-9]*$").match
+        proplist = [p for p in (('caption', 'Caption', str, None), 
+                                ('klass', 'Class Name', str, pythonliteral), 
+                                ('id', 'ID (Variable Name)', str, pythonliteral),
+                                ('category', 'Category', str, None),
+                                ('description', 'Description', str, None),
+                                ('separator', 'Has Separator', bool, None),
+                                ('image', 'Image for Control', None, None)) 
+                                    if hasattr(self._selected_data, p[0])]
+        for prop, caption, datatype, validator in proplist:
+            newsizer = wx.BoxSizer(wx.HORIZONTAL)
+            if datatype is str:
+                st = wx.StaticText(self.item_property_panel, -1, caption + ":", style=wx.ALIGN_RIGHT)
+                st.SetMinSize((100, 16))
+                newsizer.Add(st, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 2)
+                text = wx.TextCtrl(self.item_property_panel, -1, getattr(self._selected_data, prop, '') or '')
+                class edittext(object):
+                    def __init__(self, edit_object, command, app, propname, validator):
+                        self.edit_object = edit_object
+                        self.command = command
+                        self.app = app
+                        self.propname = propname
+                        self.validator = validator
+                    def __call__(self, event):
+                        newvalue = self.command.GetLabel()
+                        if self.validator is None or self.validator(newvalue):
+                            try:
+                                setattr(self.edit_object, self.propname, newvalue)
+                            except Exception as e:
+                                print e
+                            self.app.contents_tree.SetItemText(self.app.contents_tree.GetSelection(), self.edit_object.caption)
+                            self.app.save_button.Enable(True)
+                        else:
+                            self.command.SetLabel(getattr(self.edit_object, self.propname, ''))
+                        event.Skip()
+                self.Bind(wx.EVT_TEXT, edittext(self._selected_data, text, self, prop, validator), text)
+                newsizer.Add(text, 1, wx.ALL, 0)
+            elif datatype is bool:
+                class toggle(object):
+                    def __init__(self, edit_object, propname, control, app):
+                        self.edit_object = edit_object
+                        self.propname = propname
+                        self.control = control
+                        self.app = app
+                    def __call__(self, event):
+                        setattr(self.edit_object, self.propname, self.control.GetValue())
+                        self.app.save_button.Enable(True)
+                boolcheck = wx.CheckBox(self.item_property_panel, -1, caption)
+                boolcheck.SetValue(getattr(self._selected_data, prop))
+                self.Bind(wx.EVT_CHECKBOX, toggle(self._selected_data, prop, boolcheck, self), boolcheck)
+                newsizer.Add(boolcheck, 1, wx.LEFT, 100)
+            else:
+                newsizer.Add(wx.StaticText(self.item_property_panel, -1, caption + ": " + str(getattr(self._selected_data, prop))), 0, wx.EXPAND)
+            sizer.Add(newsizer, 0, wx.EXPAND|wx.BOTTOM, 2)
+        #self.item_property_panel.SetSizerAndFit(sizer, True)
+        sizer.Layout()
+        self.Refresh()
     def SelChanged(self, event):
         try:
             self._selected_data = self.contents_tree.GetItemPyData(self.contents_tree.GetSelection())
         except:
             self._selected_data = None
+        self.setupPropsDialog()
+    def DeleteItem(self, event):
+        pass
     def ChangeTab(self, event):
         pass
     def SelectProjectImage(self, event):
@@ -108,7 +277,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
             self, message="Choose an image file",
             defaultDir=(os.path.abspath(os.path.dirname(self.project.addin.image))
                             if self.project.addin.image
-                            else self.path), 
+                                else self.path), 
             defaultFile="",
             wildcard="All Files (*.*)|*.*|"
                      "GIF images (*.gif)|*.gif|"
@@ -120,31 +289,43 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
             self.project.addin.image = image_file
             bitmap = wx.Bitmap(image_file, wx.BITMAP_TYPE_ANY)
             self.icon_bitmap.SetBitmap(bitmap)
-            self.Layout()
-            self.SetSize(self.GetSize())
+            self.Fit()
             self.Refresh()
         self.save_button.Enable(True)
         event.Skip()
     def SaveProject(self, event):
+        print self.project.addin.xml
+        print
+        print self.project.addin.python
         self.save_button.Enable(False)
     def TreePopupRClick(self, event):
         id = self.contents_tree.HitTest(event.GetPosition())[0]
-        self.contents_tree.ToggleItemSelection(id)
+        self.contents_tree.SelectItem(id, True) # Set right-clicked item as selection for popups
     def TreePopup(self, event):
         menu = None
         sd = self._selected_data
         if sd is self._extensiontoplevel:
-            print "EXTN MENU"
+            menu = self.extensionmenu
         elif sd is self._menutoplevel:
-            print "MENU MENU"
+            menu = self.menumenu
         elif sd is self._toolbartoplevel:
-            print "TOOLBAR MENU"
+            menu = self.toolbarmenu
+        elif isinstance(sd, addin.ControlContainer):
+            menu = self.controlcontainermenu
+        elif isinstance(sd, (addin.UIControl, addin.XMLAttrMap)):
+            menu = wx.Menu()
         else:
             print sd
-        #menu = wx.Menu()
-        #menu.Append(wx.NewId(), "One")
-        #menu.Append(wx.NewId(), "Two")
         if menu:
+            if sd not in (self._extensiontoplevel, self._menutoplevel, self._toolbartoplevel):
+                if menu.GetMenuItemCount():
+                    menu.AppendSeparator()
+                removecmd = menu.Append(-1, "Remove")
+                def remove(event):
+                    if self.project.addin.remove(sd):
+                        self.contents_tree.Delete(self.contents_tree.GetSelection())
+                        self.save_button.Enable(True)
+                menu.Bind(wx.EVT_MENU, remove, removecmd)
             self.PopupMenu(menu)
             menu.Destroy()
 

@@ -305,6 +305,8 @@ class PythonAddin(object):
         commandnode = xml.etree.ElementTree.SubElement(appnode, 'Commands')
         for command in self.commands:
             command.xmlNode(commandnode)
+        for menu in self.menus:
+            menu.xmlNode(commandnode)
         commandnode.tail = "\n        "
         extensionnode = xml.etree.ElementTree.SubElement(appnode, 'Extensions')
         for extension in self.extensions:
@@ -314,9 +316,9 @@ class PythonAddin(object):
         for toolbar in self.toolbars:
             toolbar.xmlNode(toolbarnode)
         toolbarnode.tail = "\n        "
-        menunode = xml.etree.ElementTree.SubElement(appnode, 'Menus')
-        for menu in self.menus:
-            menu.xmlNode(menunode)
+        #menunode = xml.etree.ElementTree.SubElement(appnode, 'Menus')
+        #for menu in self.menus:
+        #    menu.xmlNode(menunode)
         menunode.tail = "\n"
         return xml.etree.ElementTree.tostring(root).encode("utf-8")
     def __iter__(self):

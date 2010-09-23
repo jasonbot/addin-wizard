@@ -282,7 +282,7 @@ class PythonAddin(object):
         xml.etree.ElementTree.SubElement(root, 'Image').text = self.image
         xml.etree.ElementTree.SubElement(root, 'Author').text = self.author
         xml.etree.ElementTree.SubElement(root, 'Company').text = self.company
-        xml.etree.ElementTree.SubElement(root, 'Date').text = datetime.datetime.now().strftime("%M/%d/%Y")
+        xml.etree.ElementTree.SubElement(root, 'Date').text = datetime.datetime.now().strftime("%m/%d/%Y")
         targets = xml.etree.ElementTree.SubElement(root, 'Targets')
         target = xml.etree.ElementTree.SubElement(targets, 'Target', {'name': "Desktop", 'version': "10.0"})
         targets.tail = "\n"
@@ -292,19 +292,24 @@ class PythonAddin(object):
         addinnode.text = "\n    "
         addinnode.tail = "\n"
         appnode = xml.etree.ElementTree.SubElement(addinnode, self.app)
-        appnode.tail = "\n"
+        appnode.tail = "\n    "
+        appnode.text = "\n        "
         commandnode = xml.etree.ElementTree.SubElement(appnode, 'Commands')
         for command in self.commands:
             command.xmlNode(commandnode)
+        commandnode.tail = "\n        "
         extensionnode = xml.etree.ElementTree.SubElement(appnode, 'Extensions')
         for extension in self.extensions:
             extension.xmlNode(extensionnode)
+        extensionnode.tail = "\n        "
         toolbarnode = xml.etree.ElementTree.SubElement(appnode, 'Toolbars')
         for toolbar in self.toolbars:
             toolbar.xmlNode(toolbarnode)
+        toolbarnode.tail = "\n        "
         menunode = xml.etree.ElementTree.SubElement(appnode, 'Menus')
         for menu in self.menus:
             menu.xmlNode(menunode)
+        menunode.tail = "\n"
         return xml.etree.ElementTree.tostring(root).encode("utf-8")
     def __iter__(self):
         def ls_(item):

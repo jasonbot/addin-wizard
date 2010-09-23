@@ -60,7 +60,8 @@ class Extension(XMLSerializable, XMLAttrMap, HasPython):
     __attr_map__ = {'name': 'caption',
                     'description': 'description',
                     'class': 'klass',
-                    'id': 'id'}
+                    'id': 'id',
+                    'category': 'category'}
     __python_methods__ = [('startup', ['self']),
                           ('shutdown', ['self']),
                           ('activeViewChanged', ['self']),
@@ -76,11 +77,12 @@ class Extension(XMLSerializable, XMLAttrMap, HasPython):
                           ('focusMapChanged', ['self']),
                           ('spatialReferenceChanged', ['self']),
                           ]
-    def __init__(self, name=None, description=None, klass=None, id=None):
+    def __init__(self, name=None, description=None, klass=None, id=None, category=None):
         self.caption = name or 'New Extension'
         self.description = description or ''
         self.klass = klass or makeid("ExtensionClass")
         self.id = id or makeid("extension")
+        self.category = category or ''
     def xmlNode(self, parent):
         newnode = xml.etree.ElementTree.SubElement(parent, 
                                                    self.__class__.__name__)
@@ -111,24 +113,28 @@ class Menu(ControlContainer):
     __attr_map__ = {'caption': 'caption', 
                     'isRootMenu': 'top_level',
                     'isShortcutMenu': 'shortcut_menu',
-                    'separator': 'separator'}
-    def __init__(self, caption='Menu', top_level=False, shortcut_menu=False, separator=False):
+                    'separator': 'separator',
+                    'category': 'category'}
+    def __init__(self, caption='Menu', top_level=False, shortcut_menu=False, separator=False, category=None):
         self.caption = caption or ''
         self.top_level = bool(top_level)
         self.shortcut_menu = bool(shortcut_menu)
         self.separator = bool(separator)
+        self.category = category or ''
         super(Menu, self).__init__()
 
 class ToolPalette(ControlContainer):
     "Tool Palette"
     __attr_map__ = {'columns': 'columns',
                     'canTearOff': 'tearoff',
-                    'isMenuStyle': 'menu_style'}
-    def __init__(self, caption=None, columns=2, tearoff=False, menu_style=False):
+                    'isMenuStyle': 'menu_style',
+                    'category': 'category'}
+    def __init__(self, caption=None, columns=2, tearoff=False, menu_style=False, category=None):
         self.caption = caption or 'Palette'
         self.columns = columns
         self.tearoff = bool(tearoff)
         self.menu_style = bool(menu_style)
+        self.category = category or ''
         super(ToolPalette, self).__init__()
 
 class Toolbar(ControlContainer):
@@ -342,6 +348,9 @@ class PythonAddinProjectDirectory(object):
             os.mkdir(install_dir)
         if not os.path.exists(images_dir):
             os.mkdir(images_dir)
+        for item in self.addin:
+            if hasattr(item, 'category'):
+                item.category = self.addin.name or self.addin.description
         with open(os.path.join(self._path, 'config.xml'), 'wb') as out_handle:
             out_handle.write(self.addin.xml)
         with open(os.path.join(install_dir, self.addin.addinfile), 'wb') as out_python:

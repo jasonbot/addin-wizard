@@ -215,7 +215,6 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
         proplist = [p for p in (('caption', 'Caption', str, None), 
                                 ('klass', 'Class Name', str, pythonliteral), 
                                 ('id', 'ID (Variable Name)', str, pythonliteral),
-                                ('category', 'Category', str, None),
                                 ('description', 'Description', str, None),
                                 ('message', 'Message', str, None),
                                 ('separator', 'Has Separator', bool, None),

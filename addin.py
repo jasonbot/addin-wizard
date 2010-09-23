@@ -1,4 +1,5 @@
 import datetime
+import hashlib
 import itertools
 import random
 import os
@@ -10,7 +11,8 @@ def makeid(prefix="id", seen=set()):
     while myint in seen:
         myint += 1
     seen.add(myint)
-    return "%s%05x" % (prefix, myint)
+    st = "%s-%05x" % (prefix, myint)
+    return prefix + hashlib.md5(st).hexdigest()[:16]
 
 class XMLSerializable(object):
     def xmlNode(self, parent_node):

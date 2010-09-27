@@ -3,6 +3,7 @@ import hashlib
 import itertools
 import random
 import os
+import shutil
 import uuid
 import xml.etree.ElementTree
 
@@ -359,12 +360,46 @@ class PythonAddinProjectDirectory(object):
             os.mkdir(install_dir)
         if not os.path.exists(images_dir):
             os.mkdir(images_dir)
-        # Auto-category
+        seen_images = set([self.addin.image])
         for item in self.addin:
+            # Auto-category
             if hasattr(item, 'category'):
                 item.category = self.addin.name or self.addin.description
-        # Consolidate images
+            # Collect for later
+            if getattr(item, 'image', ''):
+                seen_images.add(item.image)
 
+        # Consolidate images
+        seen_images = filter(bool, seen_images)
+        full_path = dict((image, 
+                          os.path.abspath(
+                              os.path.join(self._path, image))) 
+                          for image in seen_images)
+        to_relocate = set(image_file for (image_name, image_file) 
+                            in full_path.iteritems()
+                                if os.path.dirname(image_file) != images_dir)
+        relocated_images = {}
+        image_files = set(x.lower() for x in os.listdir(images_dir))
+        for image_file in to_relocate:
+            new_filename = os.path.basename(image_file)
+            if new_filename.lower() in image_files:
+                num = 1
+                fn, format = os.path.splitext(new_filename)
+                while new_filename.lower() in image_files:
+                    new_filename = fn + "_" + str(num) + format
+                    num += 1
+            relocated_images[image_file] = new_filename
+            print image_file, '->', new_filename
+            shutil.copyfile(image_file, os.path.join(self._path, 'Images', new_filename))
+        for item_with_image in (item for item in 
+                                    ([self.addin] + list(self.addin))
+                                        if getattr(item, 'image', '')):
+            item_image = item_with_image.image
+            if item_image in relocated_images:
+                item_with_image.image = os.path.join('Images', relocated_images[item_image])
+            else:
+                item_with_image.image = os.path.join('Images', os.path.basename(item_image))
+        # Output XML and Python stub
         with open(os.path.join(self._path, 'config.xml'), 'wb') as out_handle:
             out_handle.write(self.addin.xml)
         with open(os.path.join(install_dir, self.addin.addinfile), 'wb') as out_python:

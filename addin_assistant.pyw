@@ -142,6 +142,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
         if self.save_button.IsEnabled():
             self.SaveProject(event)
         self.Destroy()
+
     def SelectFolder(self, event):
         dlg = wx.DirDialog(self, "Choose a directory to use as an AddIn project root:", 
                            style=wx.DD_DEFAULT_STYLE)
@@ -163,6 +164,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
             sys.exit(0)
         else:
             return
+
     def ProjectNameText(self, event):
         newvalue = self.project_name.GetLabel()
         if not newvalue:
@@ -171,21 +173,25 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
             self.project.addin.name = newvalue
         self.save_button.Enable(True)
         event.Skip()
+
     def ProjectCompanyText(self, event):
         newvalue = self.project_company.GetLabel()
         self.project.addin.company = newvalue
         self.save_button.Enable(True)
         event.Skip()
+
     def ProjectDescriptionText(self, event):
         newvalue = self.project_description.GetLabel()
         self.project.addin.description = newvalue
         self.save_button.Enable(True)
         event.Skip()
+
     def ProjectAuthorText(self, event):
         newvalue = self.project_author.GetLabel()
         self.project.addin.author = newvalue
         self.save_button.Enable(True)
         event.Skip()
+
     def ProjectVersionText(self, event):
         newvalue = self.project_version.GetLabel()
         if not newvalue:
@@ -194,10 +200,12 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
             self.project.addin.version = newvalue
         self.save_button.Enable(True)
         event.Skip()
+
     def ComboBox(self, event):
         self.project.addin.app = self.product_combo_box.GetValue()
         self.save_button.Enable(True)
         event.Skip()
+
     def setupPropsDialog(self):
         sizer = self.item_property_panel.GetSizer()
         sizer.Clear(True)
@@ -224,10 +232,12 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                                 ('tearoff', 'Can Tear Off', bool, None),
                                 ('menu_style', 'Menu Style', bool, None),
                                 ('columns', 'Column Count', str, isinteger),
-                                ('image', 'Image for Control', None, None)) 
+                                ('image', 'Image for Control', wx.Bitmap, None)) 
                                     if hasattr(self._selected_data, p[0])]
         for prop, caption, datatype, validator in proplist:
+            # This is all kind of hairy, sorry
             newsizer = wx.BoxSizer(wx.HORIZONTAL)
+            # Text entry
             if datatype in (str, int):
                 st = wx.StaticText(self.item_property_panel, -1, caption + ":", style=wx.ALIGN_RIGHT)
                 st.SetMinSize((100, 16))
@@ -258,6 +268,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                         event.Skip()
                 self.Bind(wx.EVT_TEXT, edittext(self._selected_data, text, self, prop, validator, datatype), text)
                 newsizer.Add(text, 1, wx.RIGHT, 8)
+            # Checkbox
             elif datatype is bool:
                 class toggle(object):
                     def __init__(self, edit_object, propname, control, app):
@@ -272,26 +283,84 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                 boolcheck.SetValue(getattr(self._selected_data, prop))
                 self.Bind(wx.EVT_CHECKBOX, toggle(self._selected_data, prop, boolcheck, self), boolcheck)
                 newsizer.Add(boolcheck, 1, wx.LEFT, 100)
+            # Image selection
+            elif datatype is wx.Bitmap:
+                class pickbitmap(object):
+                    def __init__(self, edit_object, propname, control, app):
+                        self.edit_object = edit_object
+                        self.propname = propname
+                        self.control = control
+                        self.app = app
+                    def __call__(self, event):
+                        images_path = os.path.join(self.app.path, 'Images')
+                        potentialdir = getattr(self.edit_object, self.propname, '')
+                        if potentialdir:
+                            images_path = os.path.join(self.app.path, 
+                                                       os.path.dirname(potentialdir))
+                        default_path = (images_path 
+                                            if os.path.exists(images_path)
+                                            else self.app.path)
+                        dlg = wx.FileDialog(
+                            self.app, message="Choose an image file for control",
+                            defaultDir=default_path, 
+                            defaultFile="",
+                            wildcard="All Files (*.*)|*.*|"
+                                     "GIF images (*.gif)|*.gif|"
+                                     "PNG images (*.png)|*.png|"
+                                     "BMP images (*.bmp)|*.bmp",
+                            style=wx.OPEN)
+                        if dlg.ShowModal() == wx.ID_OK:
+                            image_file = dlg.GetPath()
+                            bitmap = wx.Bitmap(image_file, wx.BITMAP_TYPE_ANY)
+                            self.app.save_button.Enable(True)
+                            self.control.SetBitmapLabel(bitmap)
+                            setattr(self.edit_object, self.propname, image_file)
+                            self.app.Fit()
+                            self.app.Layout()
+                            self.app.Refresh()
+
+                st = wx.StaticText(self.item_property_panel, -1, "Image for control:", style=wx.ALIGN_RIGHT)
+                st.SetMinSize((100, 16))
+                newsizer.Add(st, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 2)
+                if getattr(self._selected_data, prop, ''):
+                    bitmap = wx.Bitmap(os.path.join(self.path, getattr(self._selected_data, prop)), wx.BITMAP_TYPE_ANY)
+                else:
+                    bitmap = wx.EmptyBitmap(16, 16, 32)
+                    bitmap.SetMaskColour((0, 0, 0))
+                    if bitmap.HasAlpha():
+                        print "ALPHA"
+                        for xc in xrange(bitmap.GetWidth()):
+                            for yc in xrange(bitmap.GetHeight()):
+                                bitmap.SetAlpha(xc, yc, 255)
+                choosefilebutton = wx.BitmapButton(self.item_property_panel, -1, bitmap)
+                self.Bind(wx.EVT_BUTTON, pickbitmap(self._selected_data, prop, choosefilebutton, self), choosefilebutton)
+                newsizer.Add(choosefilebutton, 1, wx.ALL|wx.EXPAND, 0)
+            # WHO KNOWS!
             else:
                 newsizer.Add(wx.StaticText(self.item_property_panel, -1, caption + ": " + str(getattr(self._selected_data, prop))), 0, wx.EXPAND)
             sizer.Add(newsizer, 0, wx.EXPAND|wx.BOTTOM, 2)
         #self.item_property_panel.SetSizerAndFit(sizer, True)
         sizer.Layout()
         self.Refresh()
+
     def SelChanged(self, event):
         try:
             self._selected_data = self.contents_tree.GetItemPyData(self.contents_tree.GetSelection())
         except:
             self._selected_data = None
         self.setupPropsDialog()
+
     def DeleteItem(self, event):
         pass
+
     def ChangeTab(self, event):
         pass
+
     def SelectProjectImage(self, event):
         dlg = wx.FileDialog(
             self, message="Choose an image file",
-            defaultDir=(os.path.abspath(os.path.dirname(self.project.addin.image))
+            defaultDir=(os.path.join(self.path, 
+                                     os.path.dirname(self.project.addin.image))
                             if self.project.addin.image
                                 else self.path), 
             defaultFile="",
@@ -309,6 +378,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
             self.Refresh()
         self.save_button.Enable(True)
         event.Skip()
+
     def SaveProject(self, event):
         try:
             print self.project.addin.xml
@@ -318,9 +388,11 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
             self.save_button.Enable(False)
         except Exception as e:
             print e
+
     def TreePopupRClick(self, event):
         id = self.contents_tree.HitTest(event.GetPosition())[0]
         self.contents_tree.SelectItem(id, True) # Set right-clicked item as selection for popups
+
     def TreePopup(self, event):
         menu = None
         sd = self._selected_data

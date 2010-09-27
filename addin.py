@@ -177,10 +177,14 @@ class Button(UIControl, XMLAttrMap):
         self.tip = tip or ''
         self.message = message or ''
         self.id = id or makeid("button")
+        self.help_heading = ''
+        self.help_string = ''
     def xmlNode(self, parent):
         newnode = xml.etree.ElementTree.SubElement(parent,
                                                 self.__class__.__name__)
         self.addAttrMap(newnode)
+        help = xml.etree.ElementTree.SubElement(newnode, 'Help', {'heading': self.help_heading})
+        help.text = self.help_string
         return newnode
 
 class ComboBox(Button):

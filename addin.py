@@ -59,11 +59,13 @@ class UIControl(XMLSerializable, HasPython):
 
 class Extension(XMLSerializable, XMLAttrMap, HasPython):
     "Extension"
-    __attr_map__ = {'name': 'caption',
+    __attr_map__ = {'name': 'name',
                     'description': 'description',
                     'class': 'klass',
                     'id': 'id',
-                    'category': 'category'}
+                    'category': 'category',
+                    'showInExtensionDialog': 'show_in_dialog',
+                    'autoLoad': 'auto_load'}
     __python_methods__ = [('startup', ['self']),
                           ('shutdown', ['self']),
                           ('activeViewChanged', ['self']),
@@ -80,19 +82,18 @@ class Extension(XMLSerializable, XMLAttrMap, HasPython):
                           ('spatialReferenceChanged', ['self']),
                           ]
     def __init__(self, name=None, description=None, klass=None, id=None, category=None):
-        self.caption = name or 'New Extension'
+        self.name = name or 'New Extension'
         self.description = description or ''
         self.klass = klass or makeid("ExtensionClass")
         self.id = id or makeid("extension")
         self.category = category or ''
+        self.show_in_dialog = True
+        self.auto_load = True
     def xmlNode(self, parent):
         newnode = xml.etree.ElementTree.SubElement(parent, 
                                                    self.__class__.__name__)
         self.addAttrMap(newnode)
         return newnode
-    @property
-    def name(self):
-        return self.caption
 
 class ControlContainer(XMLSerializable, XMLAttrMap):
     def __init__(self):

@@ -212,13 +212,15 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                 return True
             except:
                 return False
-        proplist = [p for p in (('caption', 'Caption', str, None), 
+        proplist = [p for p in (('name', 'Name', str, None), 
+                                ('caption', 'Caption', str, None), 
                                 ('klass', 'Class Name', str, pythonliteral), 
                                 ('id', 'ID (Variable Name)', str, pythonliteral),
                                 ('description', 'Description', str, None),
                                 ('message', 'Message', str, None),
                                 ('separator', 'Has Separator', bool, None),
                                 ('show_initially', 'Show Initially', bool, None),
+                                ('auto_load', 'Load Automatically', bool, None),
                                 ('tearoff', 'Can Tear Off', bool, None),
                                 ('menu_style', 'Menu Style', bool, None),
                                 ('columns', 'Column Count', str, isinteger),
@@ -246,7 +248,10 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                                 setattr(self.edit_object, self.propname, self.datatype(newvalue))
                             except Exception as e:
                                 print e
-                            self.app.contents_tree.SetItemText(self.app.contents_tree.GetSelection(), self.edit_object.caption)
+                            self.app.contents_tree.SetItemText(self.app.contents_tree.GetSelection(), 
+                                                               getattr(self.edit_object, 'caption', 
+                                                                   getattr(self.edit_object, 'name', 
+                                                                       str(self.edit_object))))
                             self.app.save_button.Enable(True)
                         else:
                             self.command.SetLabel(str(getattr(self.edit_object, self.propname, '')))

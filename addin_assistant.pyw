@@ -96,11 +96,11 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
         item = self._selected_data
 
         controlcontainermenu = wx.Menu()
-        buttoncmd = controlcontainermenu.Append(-1, "New Button")
-        controlcontainermenu.Bind(wx.EVT_MENU, ItemAppender(tree, selection, item, addin.Button, self.save_button), buttoncmd)
         toolcmd = controlcontainermenu.Append(-1, "New Tool")
         controlcontainermenu.Bind(wx.EVT_MENU, ItemAppender(tree, selection, item, addin.Tool, self.save_button), toolcmd)
         if not isinstance(item, addin.ToolPalette):
+            buttoncmd = controlcontainermenu.Append(-1, "New Button")
+            controlcontainermenu.Bind(wx.EVT_MENU, ItemAppender(tree, selection, item, addin.Button, self.save_button), buttoncmd)
             menucmd = controlcontainermenu.Append(-1, "New Menu")
             controlcontainermenu.Bind(wx.EVT_MENU, ItemAppender(tree, selection, item, addin.Menu, self.save_button), menucmd)
         if isinstance(item, addin.Menu):
@@ -234,8 +234,8 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                                 ('separator', 'Has Separator', bool, None),
                                 ('show_initially', 'Show Initially', bool, None),
                                 ('auto_load', 'Load Automatically', bool, None),
-                                #('tearoff', 'Can Tear Off', bool, None),
                                 ('menu_style', 'Menu Style', bool, None),
+                                ('shortcut_menu', 'Is Shortcut Menu', bool, None),
                                 ('columns', 'Column Count', str, isinteger),
                                 ('image', 'Image for Control', wx.Bitmap, None)) 
                                     if hasattr(self._selected_data, p[0])]
@@ -245,7 +245,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
             # Text entry
             if datatype in (str, int):
                 st = wx.StaticText(self.item_property_panel, -1, caption + ":", style=wx.ALIGN_RIGHT)
-                st.SetMinSize((100, 16))
+                st.SetMinSize((175, 16))
                 newsizer.Add(st, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 2)
                 text = wx.TextCtrl(self.item_property_panel, -1, str(getattr(self._selected_data, prop, '')) or '')
                 class edittext(object):
@@ -287,7 +287,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                 boolcheck = wx.CheckBox(self.item_property_panel, -1, caption)
                 boolcheck.SetValue(getattr(self._selected_data, prop))
                 self.Bind(wx.EVT_CHECKBOX, toggle(self._selected_data, prop, boolcheck, self), boolcheck)
-                newsizer.Add(boolcheck, 1, wx.LEFT, 100)
+                newsizer.Add(boolcheck, 1, wx.LEFT, 178)
             # Image selection
             elif datatype is wx.Bitmap:
                 class pickbitmap(object):
@@ -325,8 +325,8 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                             self.app.Refresh()
 
                 st = wx.StaticText(self.item_property_panel, -1, "Image for control:", style=wx.ALIGN_RIGHT)
-                st.SetMinSize((100, 16))
-                newsizer.Add(st, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 2)
+                st.SetMinSize((175, 16))
+                newsizer.Add(st, 0, wx.ALL|wx.ALIGN_TOP, 2)
                 if getattr(self._selected_data, prop, ''):
                     bitmap = wx.Bitmap(os.path.join(self.path, getattr(self._selected_data, prop)), wx.BITMAP_TYPE_ANY)
                 else:

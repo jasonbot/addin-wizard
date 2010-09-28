@@ -234,7 +234,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                                 ('separator', 'Has Separator', bool, None),
                                 ('show_initially', 'Show Initially', bool, None),
                                 ('auto_load', 'Load Automatically', bool, None),
-                                ('tearoff', 'Can Tear Off', bool, None),
+                                #('tearoff', 'Can Tear Off', bool, None),
                                 ('menu_style', 'Menu Style', bool, None),
                                 ('columns', 'Column Count', str, isinteger),
                                 ('image', 'Image for Control', wx.Bitmap, None)) 

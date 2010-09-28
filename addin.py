@@ -121,13 +121,13 @@ class Menu(ControlContainer):
                     'category': 'category',
                     'id': 'id'}
     def __init__(self, caption='Menu', top_level=False, shortcut_menu=False, separator=False, category=None, id=None):
+        super(Menu, self).__init__()
         self.caption = caption or ''
         self.top_level = bool(top_level)
         self.shortcut_menu = bool(shortcut_menu)
         self.separator = bool(separator)
         self.category = category or ''
         self.id = id or makeid("menuitem")
-        super(Menu, self).__init__()
 
 class ToolPalette(ControlContainer):
     "Tool Palette"
@@ -136,12 +136,12 @@ class ToolPalette(ControlContainer):
                     'isMenuStyle': 'menu_style',
                     'category': 'category'}
     def __init__(self, caption=None, columns=2, tearoff=False, menu_style=False, category=None):
+        super(ToolPalette, self).__init__()
         self.caption = caption or 'Palette'
         self.columns = columns
         self.tearoff = bool(tearoff)
         self.menu_style = bool(menu_style)
         self.category = category or ''
-        super(ToolPalette, self).__init__()
 
 class Toolbar(ControlContainer):
     "Toolbar"
@@ -150,11 +150,11 @@ class Toolbar(ControlContainer):
                     'id': 'id',
                     'showInitially': 'show_initially'}
     def __init__(self, id=None, caption=None, category=None, show_initially=True):
+        super(Toolbar, self).__init__()
         self.id = id or makeid("toolbar")
         self.caption = caption or 'Toolbar'
         self.category = category or ''
         self.show_initially = bool(show_initially)
-        super(Toolbar, self).__init__()
 
 class Button(UIControl, XMLAttrMap):
     "Button"
@@ -192,8 +192,15 @@ class ComboBox(Button):
     __attr_map__ = {'caption': 'caption',
                     'category': 'category',
                     'id': 'id',
-                    'class': 'klass'}
-    __init_code__ = ['self.items = ["item1", "item2"]', 'self.editable = True']
+                    'class': 'klass',
+                    'tip': 'tip',
+                    'message': 'message',
+                    'sizeString': 'size_string',
+                    'itemSizeString': 'item_size_string',
+                    'hintText': 'hint_text'}
+    @property
+    def __init_code__(self):
+        return ['self.items = ["item1", "item2"]', 'self.editable = %r' % self.editable]
     __python_methods__ = [('onSelChange',  ['self', 'selection']),
                           ('onEditChange', ['self', 'text']),
                           ('onFocus', ['self', 'focused']),
@@ -204,6 +211,14 @@ class ComboBox(Button):
         self.id = id or makeid("combo_box")
         self.category = category or ''
         self.caption = caption or "ComboBox"
+        self.message = ''
+        self.tip = ''
+        self.help_heading = ''
+        self.help_string = ''
+        self.size_string = "WWWWWW"
+        self.item_size_string = "WWWWWW"
+        self.hint_text = ''
+        self.editable = True
 
 class Tool(Button):
     "Python Tool"
@@ -225,6 +240,8 @@ class Tool(Button):
         self.klass = klass or makeid("ToolClass")
         self.id = id or makeid("tool")
         self.image = image or ''
+        self.help_heading = ''
+        self.help_string = ''
 
 class MultiItem(UIControl, XMLAttrMap):
     "MultiItem"
@@ -274,7 +291,7 @@ class PythonAddin(object):
     @property
     def commands(self):
         ids = set()
-        for container in itertools.chain(self.menus, self.toolbars):
+        for container in [i for i in self if isinstance(i, ControlContainer)]:
             for item in container.items:
                 if isinstance(item, UIControl):
                     if item.id not in ids:

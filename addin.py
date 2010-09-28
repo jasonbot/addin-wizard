@@ -52,11 +52,14 @@ class HasPython(object):
             method_string = "    pass"
         return "class {0}(object):\n{1}".format(self.klass, method_string)
 
-class UIControl(XMLSerializable, HasPython):
+class Command(object):
     def refNode(self, parent):
         return xml.etree.ElementTree.SubElement(parent,
                                                 self.__class__.__name__, 
                                                 {'refID': self.id})
+
+class UIControl(Command, XMLSerializable, HasPython):
+    pass
 
 class Extension(XMLSerializable, XMLAttrMap, HasPython):
     "Extension"
@@ -129,19 +132,21 @@ class Menu(ControlContainer):
         self.category = category or ''
         self.id = id or makeid("menuitem")
 
-class ToolPalette(ControlContainer):
+class ToolPalette(ControlContainer, Command):
     "Tool Palette"
     __attr_map__ = {'columns': 'columns',
                     'canTearOff': 'tearoff',
                     'isMenuStyle': 'menu_style',
-                    'category': 'category'}
-    def __init__(self, caption=None, columns=2, tearoff=False, menu_style=False, category=None):
+                    'category': 'category',
+                    'id': 'id'}
+    def __init__(self, caption=None, columns=2, tearoff=False, menu_style=False, category=None, id=None):
         super(ToolPalette, self).__init__()
         self.caption = caption or 'Palette'
         self.columns = columns
         self.tearoff = bool(tearoff)
         self.menu_style = bool(menu_style)
         self.category = category or ''
+        self.id = id or makeid("tool_palette")
 
 class Toolbar(ControlContainer):
     "Toolbar"
@@ -293,7 +298,7 @@ class PythonAddin(object):
         ids = set()
         for container in [i for i in self if isinstance(i, ControlContainer)]:
             for item in container.items:
-                if isinstance(item, UIControl):
+                if isinstance(item, Command):
                     if item.id not in ids:
                         ids.add(item.id)
                         yield item

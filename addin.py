@@ -380,12 +380,23 @@ class PythonAddinProjectDirectory(object):
         self._path = path
         self.addin = PythonAddin("Python Addin", "New Addin", os.path.basename(path) + "_addin")
     def save(self):
+        # Make install/images dir
         install_dir = os.path.join(self._path, 'Install')
         images_dir = os.path.join(self._path, 'Images')
         if not os.path.exists(install_dir):
             os.mkdir(install_dir)
         if not os.path.exists(images_dir):
             os.mkdir(images_dir)
+
+        # Copy packaging\* into project dir
+        packaging_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                     'packaging')
+        for filename in os.listdir(packaging_dir):
+            if not os.path.exists(os.path.join(self._path, filename)):
+                print filename, "^^"
+                shutil.copyfile(os.path.join(packaging_dir, filename), os.path.join(self._path, filename))
+
+        # For consolidating images
         seen_images = set([self.addin.image])
         for item in self.addin:
             # Auto-category
@@ -425,6 +436,7 @@ class PythonAddinProjectDirectory(object):
                 item_with_image.image = os.path.join('Images', relocated_images[item_image])
             else:
                 item_with_image.image = os.path.join('Images', os.path.basename(item_image))
+
         # Output XML and Python stub
         with open(os.path.join(self._path, 'config.xml'), 'wb') as out_handle:
             out_handle.write(self.addin.xml)

@@ -248,6 +248,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                 st.SetMinSize((175, 16))
                 newsizer.Add(st, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 2)
                 text = wx.TextCtrl(self.item_property_panel, -1, str(getattr(self._selected_data, prop, '')) or '')
+                text.SetBackgroundColour('White')
                 class edittext(object):
                     def __init__(self, edit_object, command, app, propname, validator, datatype):
                         self.edit_object = edit_object
@@ -268,8 +269,12 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                                                                    getattr(self.edit_object, 'name', 
                                                                        str(self.edit_object))))
                             self.app.save_button.Enable(True)
+                            text.SetBackgroundColour('White')
+                            self.app.Refresh()
                         else:
-                            self.command.SetLabel(str(getattr(self.edit_object, self.propname, '')))
+                            text.SetBackgroundColour('#FFEEDD')
+                            self.app.Refresh()
+                            #self.command.SetLabel(str(getattr(self.edit_object, self.propname, '')))
                         event.Skip()
                 self.Bind(wx.EVT_TEXT, edittext(self._selected_data, text, self, prop, validator, datatype), text)
                 newsizer.Add(text, 1, wx.RIGHT, 8)

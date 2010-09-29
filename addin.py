@@ -326,7 +326,7 @@ class PythonAddin(object):
         xml.etree.ElementTree.SubElement(root, 'Company').text = self.company
         xml.etree.ElementTree.SubElement(root, 'Date').text = datetime.datetime.now().strftime("%m/%d/%Y")
         targets = xml.etree.ElementTree.SubElement(root, 'Targets')
-        target = xml.etree.ElementTree.SubElement(targets, 'Target', {'name': "Desktop", 'version': "10.0"})
+        target = xml.etree.ElementTree.SubElement(targets, 'Target', {'name': "Desktop", 'version': "10.1"})
         targets.tail = "\n"
         addinnode = xml.etree.ElementTree.SubElement(root, 'AddIn', {'language': 'PYTHON', 
                                                                      'library': self.addinfile,

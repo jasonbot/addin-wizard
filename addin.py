@@ -4,14 +4,12 @@ import itertools
 import random
 import os
 import shutil
+import time
 import uuid
 import xml.etree.ElementTree
 
-def makeid(prefix="id", seen=set()):
-    myint = 1
-    while myint in seen:
-        myint += 1
-    seen.add(myint)
+def makeid(prefix="id"):
+    myint = int(time.time())
     st = "%s-%05x" % (prefix, myint)
     return prefix + hashlib.md5(st).hexdigest()[:16]
 
@@ -398,6 +396,8 @@ class PythonAddinProjectDirectory(object):
 
         # For consolidating images
         seen_images = set([self.addin.image])
+
+        # Auto-fill category
         for item in self.addin:
             # Auto-category
             if hasattr(item, 'category'):

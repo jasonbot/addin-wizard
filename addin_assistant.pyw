@@ -167,10 +167,12 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
 
     def ProjectNameText(self, event):
         newvalue = self.project_name.GetLabel()
-        if not newvalue:
-            self.project_name.SetLabel(self.project.addin.name)
-        else:
+        if newvalue:
             self.project.addin.name = newvalue
+            self.project_name.SetBackgroundColour('White')
+        else:
+            self.project_name.SetBackgroundColour('#FFEEDD')
+        self.Refresh()
         self.save_button.Enable(True)
         event.Skip()
 
@@ -194,10 +196,12 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
 
     def ProjectVersionText(self, event):
         newvalue = self.project_version.GetLabel()
-        if not newvalue:
-            self.project_version.SetLabel(self.project.addin.version)
-        else:
+        if newvalue:
             self.project.addin.version = newvalue
+            self.project_version.SetBackgroundColour('White')
+        else:
+            self.project_version.SetBackgroundColour('#FFEEDD')
+        self.Refresh()
         self.save_button.Enable(True)
         event.Skip()
 

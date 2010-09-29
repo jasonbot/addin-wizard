@@ -391,7 +391,6 @@ class PythonAddinProjectDirectory(object):
                                      'packaging')
         for filename in os.listdir(packaging_dir):
             if not os.path.exists(os.path.join(self._path, filename)):
-                print filename, "^^"
                 shutil.copyfile(os.path.join(packaging_dir, filename), os.path.join(self._path, filename))
 
         # For consolidating images
@@ -426,7 +425,6 @@ class PythonAddinProjectDirectory(object):
                     new_filename = fn + "_" + str(num) + format
                     num += 1
             relocated_images[image_file] = new_filename
-            print image_file, '->', new_filename
             shutil.copyfile(image_file, os.path.join(self._path, 'Images', new_filename))
         for item_with_image in (item for item in 
                                     ([self.addin] + list(self.addin))

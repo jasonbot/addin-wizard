@@ -385,7 +385,7 @@ class PythonAddin(object):
         for menu in self.menus:
             menu.xmlNode(menunode)
         markup = xml.etree.ElementTree.tostring(root).encode("utf-8")
-        return xml.dom.minidom.parseString(markup).toprettyxml()
+        return xml.dom.minidom.parseString(markup).toprettyxml("    ")
     def __iter__(self):
         def ls_(item):
             yield item

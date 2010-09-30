@@ -14,4 +14,4 @@ Images/*   : all UI images for the project (icons, images for buttons,
 
 Install/*  : The Python project used for the implementation of the
              AddIn. The specific python script to be used as the root
-             module is specified in xonfig.xml.
+             module is specified in config.xml.

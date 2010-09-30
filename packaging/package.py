@@ -4,7 +4,7 @@ import zipfile
 current_path = os.path.dirname(os.path.abspath(__file__))
 
 out_zip_name = os.path.join(current_path, 
-                            os.path.basename(current_path) + ".zip")
+                            os.path.basename(current_path) + ".esriaddin")
 
 zip_file = zipfile.ZipFile(out_zip_name, 'w')
 zip_file.write(os.path.join(current_path, 'config.xml'), 'config.xml')

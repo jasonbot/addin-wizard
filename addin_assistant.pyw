@@ -158,6 +158,8 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
             del self.project.warning
         # Repopulate the tree view control et al with settings from the loaded project
         self.loadTreeView()
+        # Product selection
+        self.product_combo_box.SetStringSelection(self.project.addin.app)
         # Set up metadata text entry
         self.project_name.SetLabel(self.project.addin.name)
         self.project_version.SetLabel(self.project.addin.version)

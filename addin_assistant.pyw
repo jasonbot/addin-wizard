@@ -120,7 +120,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
 
     def loadTreeView(self):
         def populate(parent, item):
-            child = self.contents_tree.AppendItem(self.treeroot, 
+            child = self.contents_tree.AppendItem(parent, 
                                                   str(getattr(item, 
                                                               'caption', 
                                                               getattr(item, 
@@ -130,6 +130,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
             if hasattr(item, 'items'):
                 for child_item in item.items:
                     populate(child, child_item)
+            self.contents_tree.Expand(parent)
         # Set up treeview control
         self.contents_tree.DeleteAllItems()
         self.treeroot = self.contents_tree.AddRoot("Root")
@@ -166,22 +167,24 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
         self.updateProjectImage()
 
     def OnClose(self, event):
-        #if self.save_button.IsEnabled():
-        #    self.SaveProject(event)
+        if self.save_button.IsEnabled():
+            confirmdlg = wx.MessageDialog(self, "Save your changes before exiting?", 'Save before exiting?', wx.OK | wx.CANCEL | wx.ICON_QUESTION)
+            res = confirmdlg.ShowModal()
+            confirmdlg.Destroy()
+            if res == wx.ID_OK:
+                self.SaveProject(event)
         self.Destroy()
 
     def SelectFolder(self, event):
         dlg = wx.DirDialog(self, "Choose a directory to use as an AddIn project root:", 
                            style=wx.DD_DEFAULT_STYLE)
         dlg.SetPath(wx.StandardPaths.Get().GetDocumentsDir())
-        import traceback
         if dlg.ShowModal() == wx.ID_OK:
             self.path = dlg.GetPath()
             try:
                 self.project = addin.PythonAddinProjectDirectory(self.path)
             except Exception as e:
                 errdlg = wx.MessageDialog(self, e.message, 'Error initializing addin', wx.OK | wx.ICON_ERROR)
-                #traceback.print_exc()
                 errdlg.ShowModal()
                 errdlg.Destroy()
             else:
@@ -417,14 +420,14 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
             self.project.addin.image = image_file
             try:
                 self.updateProjectImage()
-            except:
-                return
+            except Exception as e:
+                print "IMAGE LOAD", e
         self.save_button.Enable(True)
         event.Skip()
 
     def updateProjectImage(self):
         if self.project.addin.image:
-            image_file = os.path.join(self.project.addin._path, self.project.addin.image)
+            image_file = os.path.join(self.project._path, self.project.addin.image)
             bitmap = wx.Bitmap(image_file, wx.BITMAP_TYPE_ANY)
             self.icon_bitmap.SetBitmap(bitmap)
             self.Fit()

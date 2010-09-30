@@ -22,12 +22,11 @@ class XMLSerializable(object):
         raise NotImplementedError("Method not implemented for %r" % 
                                                             self.__class__)
     @classmethod
-    def fromNode(cls, node, id_cache=None):
+    def loadNode(cls, node, id_cache=None):
         tagname = node.tag[len(NAMESPACE):]
         if 'refID' in node.attrib and id_cache and node.attrib['refID'] in id_cache:
             return id_cache[node.attrib['refID']]
         elif tagname in cls.__registry__:
-            print tagname
             return cls.__registry__[tagname].fromNode(node, id_cache)
         raise NotImplementedError("Deserialization not implemented for %r" % cls)
     @classmethod
@@ -45,6 +44,7 @@ class XMLAttrMap(XMLSerializable):
                 else:
                     value = str(value)
                 node.attrib[attr_node] = value
+        node.tail = "\n        "
     @classmethod
     def fromNode(cls, node, id_cache=None):
         instance = cls()
@@ -61,11 +61,13 @@ class XMLAttrMap(XMLSerializable):
         if hasattr(instance, 'items'):
             item_nodes = node.find(NAMESPACE+"Items")
             for item in item_nodes.getchildren() if item_nodes is not None else []:
-                print "   --", item
-                instance.items.append(XMLSerializable.fromNode(item))
+                instance.items.append(XMLSerializable.loadNode(item, id_cache))
         if 'id' in node.attrib and isinstance(id_cache, dict):
             id_cache[node.attrib['id']] = instance
-        print instance
+        help_node = node.find(NAMESPACE+"Help")
+        if help_node is not None:
+            instance.help_heading = help_node.attrib.get('heading', '')
+            instance.help_string = (help_node.text or '').strip()
         return instance
 
 class HasPython(object):
@@ -369,14 +371,26 @@ class PythonAddin(object):
         new_addin.author = (root.find(NAMESPACE+"Author").text or '').strip()
         new_addin.company = (root.find(NAMESPACE+"Company").text or '').strip()
         addin_node = root.find(NAMESPACE+"AddIn")
+        new_addin.addinfile = addin_node.attrib.get('library', '')
+        projectpath = os.path.join(os.path.dirname(xmlfile), 'Install', os.path.dirname(new_addin.addinfile))
+        if os.path.isfile(os.path.join(projectpath, new_addin.addinfile)):
+            addin_py = os.path.join(projectpath, new_addin.addinfile)
+            path, ext = os.path.splitext(addin_py)
+
+            new_index = 1
+            new_file = path + "_" + str(new_index) + ext
+            while os.path.exists(new_file):
+                new_index += 1
+                new_file = path + "_" + str(new_index) + ext
+            shutil.copyfile(addin_py, new_file)
+            new_addin.warning = "Python script {0} already exists. Creating backup as {1}.".format(addin_py, new_file)
         app_node = addin_node.getchildren()[0]
         new_addin.app = app_node.tag[len(NAMESPACE):]
         for command in app_node.find(NAMESPACE+"Commands").getchildren():
-            XMLSerializable.fromNode(command, id_cache)
+            XMLSerializable.loadNode(command, id_cache)
         for tag in ("Extensions", "Toolbars", "Menus"):
             for item in app_node.find(NAMESPACE+tag).getchildren():
-                new_addin.items.append(XMLSerializable.fromNode(command, id_cache))
-        print "ITEMS", new_addin.items
+                new_addin.items.append(XMLSerializable.loadNode(item, id_cache))
         return new_addin
     @property
     def xml(self):
@@ -397,22 +411,27 @@ class PythonAddin(object):
                                                                      'library': self.addinfile,
                                                                      'namespace': self.namespace})
         appnode = xml.etree.ElementTree.SubElement(addinnode, self.app)
+        appnode.text = "\n    "
         commandnode = xml.etree.ElementTree.SubElement(appnode, 'Commands')
-        commandnode.text = " "
+        commandnode.text = "\n        "
         for command in self.commands:
             command.xmlNode(commandnode)
+        commandnode.tail = "\n    "
         extensionnode = xml.etree.ElementTree.SubElement(appnode, 'Extensions')
-        extensionnode.text = " "
+        extensionnode.text = "\n        "
         for extension in self.extensions:
             extension.xmlNode(extensionnode)
+        extensionnode.tail = "\n    "
         toolbarnode = xml.etree.ElementTree.SubElement(appnode, 'Toolbars')
-        toolbarnode.text = " "
+        toolbarnode.text = "\n        "
         for toolbar in self.toolbars:
             toolbar.xmlNode(toolbarnode)
+        toolbarnode.tail = "\n    "
         menunode = xml.etree.ElementTree.SubElement(appnode, 'Menus')
-        menunode.text = " "
+        menunode.text = "\n        "
         for menu in self.menus:
             menu.xmlNode(menunode)
+        menunode.tail = "\n    "
         markup = xml.etree.ElementTree.tostring(root).encode("utf-8")
         return markup
         #return xml.dom.minidom.parseString(markup).toprettyxml("    ")
@@ -440,7 +459,7 @@ class PythonAddinProjectDirectory(object):
             if not all(item in listing for item in ('config.xml', 'Install', 'Images')):
                 raise ValueError("{0} is not empty. Please select an empty directory to host this new addin.".format(path))
             else:
-                raise ValueError("{0} exists and is a valid project directory, but loading doesn't work yet.")
+                #raise ValueError("{0} exists and is a valid project directory, but loading doesn't work yet.")
                 self.addin = PythonAddin.fromXML(os.path.join(self._path, 'config.xml'))
                 self.warning = getattr(self.addin, 'warning', None)
         else:

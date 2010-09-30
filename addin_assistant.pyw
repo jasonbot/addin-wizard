@@ -96,8 +96,6 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
         item = self._selected_data
 
         controlcontainermenu = wx.Menu()
-        toolcmd = controlcontainermenu.Append(-1, "New Tool")
-        controlcontainermenu.Bind(wx.EVT_MENU, ItemAppender(tree, selection, item, addin.Tool, self.save_button), toolcmd)
         if not isinstance(item, addin.ToolPalette):
             buttoncmd = controlcontainermenu.Append(-1, "New Button")
             controlcontainermenu.Bind(wx.EVT_MENU, ItemAppender(tree, selection, item, addin.Button, self.save_button), buttoncmd)
@@ -106,6 +104,9 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
         if isinstance(item, addin.Menu):
             multiitemcmd = controlcontainermenu.Append(-1, "New MultiItem")
             controlcontainermenu.Bind(wx.EVT_MENU, ItemAppender(tree, selection, item, addin.MultiItem, self.save_button), multiitemcmd)
+        else:
+            toolcmd = controlcontainermenu.Append(-1, "New Tool")
+            controlcontainermenu.Bind(wx.EVT_MENU, ItemAppender(tree, selection, item, addin.Tool, self.save_button), toolcmd)
         if not isinstance(item, (addin.ToolPalette, addin.Menu)):
             palettecmd = controlcontainermenu.Append(-1, "New Tool Palette")
             controlcontainermenu.Bind(wx.EVT_MENU, ItemAppender(tree, selection, item, addin.ToolPalette, self.save_button), palettecmd)
@@ -386,12 +387,20 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
         if dlg.ShowModal() == wx.ID_OK:
             image_file = dlg.GetPath()
             self.project.addin.image = image_file
+            try:
+                self.updateProjectImage()
+            except:
+                return
+        self.save_button.Enable(True)
+        event.Skip()
+
+    def updateProjectImage(self):
+        if self.project.addin.image:
+            image_file = os.path.join(self.project.addin._path, self.project.addin.image)
             bitmap = wx.Bitmap(image_file, wx.BITMAP_TYPE_ANY)
             self.icon_bitmap.SetBitmap(bitmap)
             self.Fit()
             self.Refresh()
-        self.save_button.Enable(True)
-        event.Skip()
 
     def SaveProject(self, event):
         try:

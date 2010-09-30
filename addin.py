@@ -7,6 +7,7 @@ import shutil
 import time
 import uuid
 import xml.etree.ElementTree
+import xml.dom.minidom
 
 def makeid(prefix="id"):
     myint = int(time.time())
@@ -14,12 +15,19 @@ def makeid(prefix="id"):
     return prefix + hashlib.md5(st).hexdigest()[:16]
 
 class XMLSerializable(object):
+    __registry__ = {}
     def xmlNode(self, parent_node):
         raise NotImplementedError("Method not implemented for %r" % 
                                                             self.__class__)
     @classmethod
     def fromNode(cls, node, id_cache=None):
+        if 'refID' in node.attrib and id_cache:
+            return id_cache[node.attrib['refID']]
         raise NotImplementedError("Method not implemented for %r" % cls)
+    @classmethod
+    def registerType(cls, klass):
+        cls.__registry__[klass.__name__] = klass
+        return klass
 
 class XMLAttrMap(object):
     def addAttrMap(self, node):
@@ -31,6 +39,24 @@ class XMLAttrMap(object):
                 else:
                     value = str(value)
                 node.attrib[attr_node] = value
+    @classmethod
+    def fromNode(cls, node, id_cache=None):
+        if 'refID' in node.attrib and id_cache:
+            return id_cache[node.attrib['refID']]
+        instance = cls()
+        for attrib, mapping_attrib in getattr(cls, '__attr_map__', {}).iteritems():
+            val = node.attrib.get(attrib, '')
+            if val in ('true', 'false'): # Coerce bool?
+                val = True if val == 'true' else False
+            else: # Coerce int?
+                try:
+                    val = int(val)
+                except ValueError:
+                    pass
+            setattr(instance, mapping_attrib, val)
+        if 'id' in node.attrib and isinstance(id_cache, dict):
+            id_cache[node.attrib['id']] = instance
+        return instance
 
 class HasPython(object):
     @property
@@ -59,6 +85,7 @@ class Command(object):
 class UIControl(Command, XMLSerializable, HasPython):
     pass
 
+@XMLSerializable.registerType
 class Extension(XMLSerializable, XMLAttrMap, HasPython):
     "Extension"
     __attr_map__ = {'name': 'name',
@@ -113,6 +140,7 @@ class ControlContainer(XMLSerializable, XMLAttrMap):
         self.addAttrMap(newnode)
         self.addItemsToNode(newnode)
 
+@XMLSerializable.registerType
 class Menu(ControlContainer):
     "Menu"
     __attr_map__ = {'caption': 'caption', 
@@ -130,6 +158,7 @@ class Menu(ControlContainer):
         self.category = category or ''
         self.id = id or makeid("menuitem")
 
+@XMLSerializable.registerType
 class ToolPalette(ControlContainer, Command):
     "Tool Palette"
     __attr_map__ = {'columns': 'columns',
@@ -146,6 +175,7 @@ class ToolPalette(ControlContainer, Command):
         self.category = category or ''
         self.id = id or makeid("tool_palette")
 
+@XMLSerializable.registerType
 class Toolbar(ControlContainer):
     "Toolbar"
     __attr_map__ = {'caption': 'caption',
@@ -159,6 +189,7 @@ class Toolbar(ControlContainer):
         self.category = category or ''
         self.show_initially = bool(show_initially)
 
+@XMLSerializable.registerType
 class Button(UIControl, XMLAttrMap):
     "Button"
     __python_methods__ = [('onClick', ['self'])]
@@ -190,6 +221,7 @@ class Button(UIControl, XMLAttrMap):
         help.text = self.help_string
         return newnode
 
+@XMLSerializable.registerType
 class ComboBox(Button):
     "Combo Box"
     __attr_map__ = {'caption': 'caption',
@@ -223,6 +255,7 @@ class ComboBox(Button):
         self.hint_text = ''
         self.editable = True
 
+@XMLSerializable.registerType
 class Tool(Button):
     "Python Tool"
     __python_methods__ = [('onMouseDown', ['self', 'x', 'y', 'button', 'shift']),
@@ -246,6 +279,7 @@ class Tool(Button):
         self.help_heading = ''
         self.help_string = ''
 
+@XMLSerializable.registerType
 class MultiItem(UIControl, XMLAttrMap):
     "MultiItem"
     __attr_map__ = {'id': 'id',
@@ -265,6 +299,7 @@ class MultiItem(UIControl, XMLAttrMap):
         return newnode
 
 class PythonAddin(object):
+    __apps__ = ('ArcMap', 'ArcCatalog', 'ArcGlobe', 'ArcScene')
     def __init__(self, name, description, namespace, author='Untitled',
                  company='Untitled', version='0.1', image='', app='ArcMap'):
         self.name = name
@@ -272,13 +307,18 @@ class PythonAddin(object):
         self.namespace = namespace
         self.author = author
         self.company = company
-        assert app in ('ArcMap', 'ArcCatalog', 'ArcGlobe', 'ArcScene')
+        assert app in self.__apps__
         self.app = app
-        self.guid = uuid.uuid4()
+        self.guid = "{%s}" % uuid.uuid4()
         self.version = version
         self.image = image
         self.addinfile = self.namespace + '.py'
         self.items = []
+    @classmethod
+    def fromXML(cls, xmlfile):
+        new_addin = cls('unknown', 'unknown', 'unknown')
+        id_cache = {}
+        return new_addin
     def remove(self, target_item):
         def rm_(container_object, target_item):
             items = getattr(container_object, 'items', [])
@@ -314,9 +354,8 @@ class PythonAddin(object):
         root = xml.etree.ElementTree.Element('ESRI.Configuration',
                 {'xmlns': "http://schemas.esri.com/Desktop/AddIns",
                  'xmlns:xsi': "http://www.w3.org/2001/XMLSchema-instance"})
-        root.text = "\n"
         xml.etree.ElementTree.SubElement(root, 'Name').text = self.name
-        xml.etree.ElementTree.SubElement(root, 'AddInID').text = "{%s}" % self.guid
+        xml.etree.ElementTree.SubElement(root, 'AddInID').text = self.guid
         xml.etree.ElementTree.SubElement(root, 'Description').text = self.description
         xml.etree.ElementTree.SubElement(root, 'Version').text = self.version
         xml.etree.ElementTree.SubElement(root, 'Image').text = self.image
@@ -325,36 +364,28 @@ class PythonAddin(object):
         xml.etree.ElementTree.SubElement(root, 'Date').text = datetime.datetime.now().strftime("%m/%d/%Y")
         targets = xml.etree.ElementTree.SubElement(root, 'Targets')
         target = xml.etree.ElementTree.SubElement(targets, 'Target', {'name': "Desktop", 'version': "10.1"})
-        targets.tail = "\n"
         addinnode = xml.etree.ElementTree.SubElement(root, 'AddIn', {'language': 'PYTHON', 
                                                                      'library': self.addinfile,
                                                                      'namespace': self.namespace})
-        addinnode.text = "\n    "
-        addinnode.tail = "\n"
         appnode = xml.etree.ElementTree.SubElement(addinnode, self.app)
-        appnode.tail = "\n    "
-        appnode.text = "\n        "
         commandnode = xml.etree.ElementTree.SubElement(appnode, 'Commands')
         commandnode.text = " "
         for command in self.commands:
             command.xmlNode(commandnode)
-        commandnode.tail = "\n        "
         extensionnode = xml.etree.ElementTree.SubElement(appnode, 'Extensions')
         extensionnode.text = " "
         for extension in self.extensions:
             extension.xmlNode(extensionnode)
-        extensionnode.tail = "\n        "
         toolbarnode = xml.etree.ElementTree.SubElement(appnode, 'Toolbars')
         toolbarnode.text = " "
         for toolbar in self.toolbars:
             toolbar.xmlNode(toolbarnode)
-        toolbarnode.tail = "\n        "
         menunode = xml.etree.ElementTree.SubElement(appnode, 'Menus')
         menunode.text = " "
         for menu in self.menus:
             menu.xmlNode(menunode)
-        menunode.tail = "\n"
-        return xml.etree.ElementTree.tostring(root).encode("utf-8")
+        markup = xml.etree.ElementTree.tostring(root).encode("utf-8")
+        return xml.dom.minidom.parseString(markup).toprettyxml()
     def __iter__(self):
         def ls_(item):
             yield item

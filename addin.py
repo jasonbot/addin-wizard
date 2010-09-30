@@ -9,6 +9,8 @@ import uuid
 import xml.etree.ElementTree
 import xml.dom.minidom
 
+NAMESPACE = "{http://schemas.esri.com/Desktop/AddIns}"
+
 def makeid(prefix="id"):
     myint = int(time.time())
     st = "%s-%05x" % (prefix, myint)
@@ -21,15 +23,19 @@ class XMLSerializable(object):
                                                             self.__class__)
     @classmethod
     def fromNode(cls, node, id_cache=None):
-        if 'refID' in node.attrib and id_cache:
+        tagname = node.tag[len(NAMESPACE):]
+        if 'refID' in node.attrib and id_cache and node.attrib['refID'] in id_cache:
             return id_cache[node.attrib['refID']]
-        raise NotImplementedError("Method not implemented for %r" % cls)
+        elif tagname in cls.__registry__:
+            print tagname
+            return cls.__registry__[tagname].fromNode(node, id_cache)
+        raise NotImplementedError("Deserialization not implemented for %r" % cls)
     @classmethod
     def registerType(cls, klass):
         cls.__registry__[klass.__name__] = klass
         return klass
 
-class XMLAttrMap(object):
+class XMLAttrMap(XMLSerializable):
     def addAttrMap(self, node):
         if hasattr(self, '__attr_map__'):
             for attr_node, attr_name in self.__attr_map__.iteritems():
@@ -41,8 +47,6 @@ class XMLAttrMap(object):
                 node.attrib[attr_node] = value
     @classmethod
     def fromNode(cls, node, id_cache=None):
-        if 'refID' in node.attrib and id_cache:
-            return id_cache[node.attrib['refID']]
         instance = cls()
         for attrib, mapping_attrib in getattr(cls, '__attr_map__', {}).iteritems():
             val = node.attrib.get(attrib, '')
@@ -54,8 +58,14 @@ class XMLAttrMap(object):
                 except ValueError:
                     pass
             setattr(instance, mapping_attrib, val)
+        if hasattr(instance, 'items'):
+            item_nodes = node.find(NAMESPACE+"Items")
+            for item in item_nodes.getchildren() if item_nodes is not None else []:
+                print "   --", item
+                instance.items.append(XMLSerializable.fromNode(item))
         if 'id' in node.attrib and isinstance(id_cache, dict):
             id_cache[node.attrib['id']] = instance
+        print instance
         return instance
 
 class HasPython(object):
@@ -86,7 +96,7 @@ class UIControl(Command, XMLSerializable, HasPython):
     pass
 
 @XMLSerializable.registerType
-class Extension(XMLSerializable, XMLAttrMap, HasPython):
+class Extension(XMLAttrMap, HasPython):
     "Extension"
     __attr_map__ = {'name': 'name',
                     'description': 'description',
@@ -124,7 +134,7 @@ class Extension(XMLSerializable, XMLAttrMap, HasPython):
         self.addAttrMap(newnode)
         return newnode
 
-class ControlContainer(XMLSerializable, XMLAttrMap):
+class ControlContainer(XMLAttrMap):
     def __init__(self):
         self.items = []
     def addItemsToNode(self, parent_node):
@@ -190,7 +200,7 @@ class Toolbar(ControlContainer):
         self.show_initially = bool(show_initially)
 
 @XMLSerializable.registerType
-class Button(UIControl, XMLAttrMap):
+class Button(XMLAttrMap, UIControl):
     "Button"
     __python_methods__ = [('onClick', ['self'])]
     __init_code__ = ['self.enabled = True', 'self.checked = False']
@@ -280,7 +290,7 @@ class Tool(Button):
         self.help_string = ''
 
 @XMLSerializable.registerType
-class MultiItem(UIControl, XMLAttrMap):
+class MultiItem(XMLAttrMap, UIControl):
     "MultiItem"
     __attr_map__ = {'id': 'id',
                     'class': 'klass',
@@ -314,11 +324,6 @@ class PythonAddin(object):
         self.image = image
         self.addinfile = self.namespace + '.py'
         self.items = []
-    @classmethod
-    def fromXML(cls, xmlfile):
-        new_addin = cls('unknown', 'unknown', 'unknown')
-        id_cache = {}
-        return new_addin
     def remove(self, target_item):
         def rm_(container_object, target_item):
             items = getattr(container_object, 'items', [])
@@ -349,6 +354,30 @@ class PythonAddin(object):
     @property
     def extensions(self):
         return [extension for extension in self.items if isinstance(extension, Extension)]
+    @classmethod
+    def fromXML(cls, xmlfile):
+        new_addin = cls('unknown', 'unknown', 'unknown')
+        id_cache = {}
+        doc = xml.etree.ElementTree.parse(xmlfile)
+        root = doc.getroot()
+        assert root.tag == NAMESPACE+'ESRI.Configuration', root.tag
+        new_addin.name = (root.find(NAMESPACE+"Name").text or '').strip()
+        new_addin.guid = (root.find(NAMESPACE+"AddInID").text or '').strip()
+        new_addin.description = (root.find(NAMESPACE+"Description").text or '').strip()
+        new_addin.version = (root.find(NAMESPACE+"Version").text or '').strip()
+        new_addin.image = (root.find(NAMESPACE+"Image").text or '').strip()
+        new_addin.author = (root.find(NAMESPACE+"Author").text or '').strip()
+        new_addin.company = (root.find(NAMESPACE+"Company").text or '').strip()
+        addin_node = root.find(NAMESPACE+"AddIn")
+        app_node = addin_node.getchildren()[0]
+        new_addin.app = app_node.tag[len(NAMESPACE):]
+        for command in app_node.find(NAMESPACE+"Commands").getchildren():
+            XMLSerializable.fromNode(command, id_cache)
+        for tag in ("Extensions", "Toolbars", "Menus"):
+            for item in app_node.find(NAMESPACE+tag).getchildren():
+                new_addin.items.append(XMLSerializable.fromNode(command, id_cache))
+        print "ITEMS", new_addin.items
+        return new_addin
     @property
     def xml(self):
         root = xml.etree.ElementTree.Element('ESRI.Configuration',
@@ -388,11 +417,11 @@ class PythonAddin(object):
         return xml.dom.minidom.parseString(markup).toprettyxml("    ")
     def __iter__(self):
         def ls_(item):
-            yield item
             if hasattr(item, 'items'):
                 for item_ in item.items:
                     for item__ in ls_(item_):
                         yield item__
+            yield item
         for bitem in self.items:
             for aitem in ls_(bitem):
                 yield aitem
@@ -402,12 +431,19 @@ class PythonAddin(object):
 
 class PythonAddinProjectDirectory(object):
     def __init__(self, path):
+        self._path = path
         if not os.path.exists(path):
             raise IOError("{0} does not exist. Please select a directory that exists.".format(path))
-        if os.listdir(path):
-            raise ValueError("{0} is not empty. Please select an empty directory to host this new addin.".format(path))
-        self._path = path
-        self.addin = PythonAddin("Python Addin", "New Addin", os.path.basename(path) + "_addin")
+        listing = os.listdir(path)
+        if listing:
+            if not all(item in listing for item in ('config.xml', 'Install', 'Images')):
+                raise ValueError("{0} is not empty. Please select an empty directory to host this new addin.".format(path))
+            else:
+                raise ValueError("{0} exists and is a valid project directory, but loading doesn't work yet.")
+                self.addin = PythonAddin.fromXML(os.path.join(self._path, 'config.xml'))
+                self.warning = getattr(self.addin, 'warning', None)
+        else:
+            self.addin = PythonAddin("Python Addin", "New Addin", os.path.basename(path) + "_addin")
     def save(self):
         # Make install/images dir
         install_dir = os.path.join(self._path, 'Install')

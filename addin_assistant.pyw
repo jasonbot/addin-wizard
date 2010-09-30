@@ -35,6 +35,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
         menuitem = self.contents_tree.AppendItem(self.extensionsroot, extension.name)
         self.contents_tree.SetItemPyData(menuitem, extension)
         self.contents_tree.SelectItem(menuitem, True)
+        self.save_button.Enable(True)
 
     def AddMenu(self, event):
         menu = addin.Menu("Menu", self._selected_data is self._menutoplevel)
@@ -42,6 +43,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
         menuitem = self.contents_tree.AppendItem(self.menusroot, menu.caption)
         self.contents_tree.SetItemPyData(menuitem, menu)
         self.contents_tree.SelectItem(menuitem, True)
+        self.save_button.Enable(True)
 
     def AddToolbar(self, event):
         toolbar = addin.Toolbar()
@@ -49,6 +51,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
         toolbaritem = self.contents_tree.AppendItem(self.toolbarsroot, toolbar.caption)
         self.contents_tree.SetItemPyData(toolbaritem, toolbar)
         self.contents_tree.SelectItem(toolbaritem, True)
+        self.save_button.Enable(True)
 
     @property
     def extensionmenu(self):
@@ -116,20 +119,42 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
         return controlcontainermenu
 
     def loadTreeView(self):
+        def populate(parent, item):
+            child = self.contents_tree.AppendItem(self.treeroot, 
+                                                  str(getattr(item, 
+                                                              'caption', 
+                                                              getattr(item, 
+                                                                      'name', 
+                                                                      str(item)))))
+            self.contents_tree.SetItemPyData(child, item)
+            if hasattr(item, 'items'):
+                for child_item in item.items:
+                    populate(child, child_item)
         # Set up treeview control
         self.contents_tree.DeleteAllItems()
         self.treeroot = self.contents_tree.AddRoot("Root")
         self.extensionsroot = self.contents_tree.AppendItem(self.treeroot, "EXTENSIONS")
         self.contents_tree.SetItemPyData(self.extensionsroot, self._extensiontoplevel)
+        for item in self.project.addin.extensions:
+            populate(self.extensionsroot, item)
         self.menusroot = self.contents_tree.AppendItem(self.treeroot, "MENUS")
         self.contents_tree.SetItemPyData(self.menusroot, self._menutoplevel)
+        for item in self.project.addin.menus:
+            populate(self.menusroot, item)
         self.toolbarsroot = self.contents_tree.AppendItem(self.treeroot, "TOOLBARS")
         self.contents_tree.SetItemPyData(self.toolbarsroot, self._toolbartoplevel)
+        for item in self.project.addin.toolbars:
+            populate(self.toolbarsroot, item)
         self.contents_tree.SetItemBold(self.extensionsroot, True)
         self.contents_tree.SetItemBold(self.menusroot, True)
         self.contents_tree.SetItemBold(self.toolbarsroot, True)
 
     def loadProject(self):
+        if getattr(self.project, 'warning', None):
+            msgdlg = wx.MessageDialog(self, str(self.project.warning), 'Project Information', wx.OK | wx.ICON_INFORMATION)
+            msgdlg.ShowModal()
+            msgdlg.Destroy()
+            del self.project.warning
         # Repopulate the tree view control et al with settings from the loaded project
         self.loadTreeView()
         # Set up metadata text entry
@@ -138,22 +163,25 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
         self.project_company.SetLabel(self.project.addin.company)
         self.project_description.SetLabel(self.project.addin.description)
         self.project_author.SetLabel(self.project.addin.author)
+        self.updateProjectImage()
 
     def OnClose(self, event):
-        if self.save_button.IsEnabled():
-            self.SaveProject(event)
+        #if self.save_button.IsEnabled():
+        #    self.SaveProject(event)
         self.Destroy()
 
     def SelectFolder(self, event):
         dlg = wx.DirDialog(self, "Choose a directory to use as an AddIn project root:", 
                            style=wx.DD_DEFAULT_STYLE)
         dlg.SetPath(wx.StandardPaths.Get().GetDocumentsDir())
+        import traceback
         if dlg.ShowModal() == wx.ID_OK:
             self.path = dlg.GetPath()
             try:
                 self.project = addin.PythonAddinProjectDirectory(self.path)
             except Exception as e:
                 errdlg = wx.MessageDialog(self, e.message, 'Error initializing addin', wx.OK | wx.ICON_ERROR)
+                #traceback.print_exc()
                 errdlg.ShowModal()
                 errdlg.Destroy()
             else:

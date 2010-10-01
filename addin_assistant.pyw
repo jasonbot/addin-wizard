@@ -307,12 +307,11 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                                                                    getattr(self.edit_object, 'name', 
                                                                        str(self.edit_object))))
                             self.app.save_button.Enable(True)
-                            text.SetBackgroundColour('White')
+                            self.command.SetBackgroundColour('White')
                             self.app.Refresh()
                         else:
-                            text.SetBackgroundColour('#FFEEDD')
+                            self.command.SetBackgroundColour('#FFEEDD')
                             self.app.Refresh()
-                            #self.command.SetLabel(str(getattr(self.edit_object, self.propname, '')))
                         event.Skip()
                 self.Bind(wx.EVT_TEXT, edittext(self._selected_data, text, self, prop, validator, datatype), text)
                 newsizer.Add(text, 1, wx.RIGHT, 8)

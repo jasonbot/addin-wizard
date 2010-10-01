@@ -134,16 +134,22 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
         # Set up treeview control
         self.contents_tree.DeleteAllItems()
         self.treeroot = self.contents_tree.AddRoot("Root")
-        self.extensionsroot = self.contents_tree.AppendItem(self.treeroot, "EXTENSIONS")
-        self.contents_tree.SetItemPyData(self.extensionsroot, self._extensiontoplevel)
+        self.extensionsroot = self.contents_tree.AppendItem(self.treeroot,
+                                                            "EXTENSIONS")
+        self.contents_tree.SetItemPyData(self.extensionsroot,
+                                         self._extensiontoplevel)
         for item in self.project.addin.extensions:
             populate(self.extensionsroot, item)
-        self.menusroot = self.contents_tree.AppendItem(self.treeroot, "MENUS")
-        self.contents_tree.SetItemPyData(self.menusroot, self._menutoplevel)
+        self.menusroot = self.contents_tree.AppendItem(self.treeroot,
+                                                       "MENUS")
+        self.contents_tree.SetItemPyData(self.menusroot,
+                                         self._menutoplevel)
         for item in self.project.addin.menus:
             populate(self.menusroot, item)
-        self.toolbarsroot = self.contents_tree.AppendItem(self.treeroot, "TOOLBARS")
-        self.contents_tree.SetItemPyData(self.toolbarsroot, self._toolbartoplevel)
+        self.toolbarsroot = self.contents_tree.AppendItem(self.treeroot,
+                                                          "TOOLBARS")
+        self.contents_tree.SetItemPyData(self.toolbarsroot,
+                                         self._toolbartoplevel)
         for item in self.project.addin.toolbars:
             populate(self.toolbarsroot, item)
         self.contents_tree.SetItemBold(self.extensionsroot, True)
@@ -152,7 +158,9 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
 
     def loadProject(self):
         if getattr(self.project, 'warning', None):
-            msgdlg = wx.MessageDialog(self, str(self.project.warning), 'Project Information', wx.OK | wx.ICON_INFORMATION)
+            msgdlg = wx.MessageDialog(self, str(self.project.warning),
+                                            'Project Information', 
+                                            wx.OK | wx.ICON_INFORMATION)
             msgdlg.ShowModal()
             msgdlg.Destroy()
             del self.project.warning
@@ -170,7 +178,9 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
 
     def OnClose(self, event):
         if self.save_button.IsEnabled():
-            confirmdlg = wx.MessageDialog(self, "Save your changes before exiting?", 'Save before exiting?', wx.YES_NO | wx.ICON_QUESTION)
+            confirmdlg = wx.MessageDialog(self, "Save your changes before exiting?", 
+                                                'Save before exiting?', 
+                                                wx.YES_NO | wx.ICON_QUESTION)
             res = confirmdlg.ShowModal()
             confirmdlg.Destroy()
             if res == wx.ID_YES:
@@ -178,6 +188,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
         self.Destroy()
 
     def SelectFolder(self, event):
+        import traceback
         dlg = wx.DirDialog(self, "Choose a directory to use as an AddIn project root:", 
                            style=wx.DD_DEFAULT_STYLE)
         dlg.SetPath(wx.StandardPaths.Get().GetDocumentsDir())
@@ -186,9 +197,12 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
             try:
                 self.project = addin.PythonAddinProjectDirectory(self.path)
             except Exception as e:
-                errdlg = wx.MessageDialog(self, e.message, 'Error initializing addin', wx.OK | wx.ICON_ERROR)
+                errdlg = wx.MessageDialog(self, e.message,
+                                                'Error initializing addin', 
+                                                wx.OK | wx.ICON_ERROR)
                 errdlg.ShowModal()
                 errdlg.Destroy()
+                traceback.print_exc()
             else:
                 self.folder_button.SetLabel(self.path)
                 self.loadProject()
@@ -386,7 +400,6 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
             else:
                 newsizer.Add(wx.StaticText(self.item_property_panel, -1, caption + ": " + str(getattr(self._selected_data, prop))), 0, wx.EXPAND)
             sizer.Add(newsizer, 0, wx.EXPAND|wx.BOTTOM, 2)
-        #self.item_property_panel.SetSizerAndFit(sizer, True)
         sizer.Layout()
         self.Refresh()
 

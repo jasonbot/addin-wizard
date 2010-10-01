@@ -383,7 +383,7 @@ class PythonAddin(object):
                 new_index += 1
                 new_file = path + "_" + str(new_index) + ext
             #shutil.copyfile(addin_py, new_file)
-            self.backup_data = (addin_py, new_file)
+            new_addin.backup_data = (addin_py, new_file)
             new_addin.warning = "Python script {0} already exists. Will create a backup as {1} upon first save.".format(addin_py, new_file)
         app_node = addin_node.getchildren()[0]
         new_addin.app = app_node.tag[len(NAMESPACE):]

@@ -382,8 +382,9 @@ class PythonAddin(object):
             while os.path.exists(new_file):
                 new_index += 1
                 new_file = path + "_" + str(new_index) + ext
-            shutil.copyfile(addin_py, new_file)
-            new_addin.warning = "Python script {0} already exists. Creating backup as {1}.".format(addin_py, new_file)
+            #shutil.copyfile(addin_py, new_file)
+            self.backup_data = (addin_py, new_file)
+            new_addin.warning = "Python script {0} already exists. Will create a backup as {1} upon first save.".format(addin_py, new_file)
         app_node = addin_node.getchildren()[0]
         new_addin.app = app_node.tag[len(NAMESPACE):]
         for command in app_node.find(NAMESPACE+"Commands").getchildren():
@@ -392,6 +393,11 @@ class PythonAddin(object):
             for item in app_node.find(NAMESPACE+tag).getchildren():
                 new_addin.items.append(XMLSerializable.loadNode(item, id_cache))
         return new_addin
+    def backup(self):
+        backup_data = getattr(self, 'backup_data', None)
+        if backup_data:
+            shutil.copyfile(*backup_data)
+        self.backup_data = None
     @property
     def xml(self):
         root = xml.etree.ElementTree.Element('ESRI.Configuration',
@@ -522,6 +528,8 @@ class PythonAddinProjectDirectory(object):
             else:
                 item_with_image.image = os.path.join('Images', os.path.basename(item_image))
 
+        # Back up .py file if necessary
+        self.addin.backup()
         # Output XML and Python stub
         with open(os.path.join(self._path, 'config.xml'), 'wb') as out_handle:
             out_handle.write(self.addin.xml)

@@ -170,10 +170,10 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
 
     def OnClose(self, event):
         if self.save_button.IsEnabled():
-            confirmdlg = wx.MessageDialog(self, "Save your changes before exiting?", 'Save before exiting?', wx.OK | wx.CANCEL | wx.ICON_QUESTION)
+            confirmdlg = wx.MessageDialog(self, "Save your changes before exiting?", 'Save before exiting?', wx.YES_NO | wx.ICON_QUESTION)
             res = confirmdlg.ShowModal()
             confirmdlg.Destroy()
-            if res == wx.ID_OK:
+            if res == wx.ID_YES:
                 self.SaveProject(event)
         self.Destroy()
 

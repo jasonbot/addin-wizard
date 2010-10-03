@@ -480,7 +480,11 @@ class PythonAddinProjectDirectory(object):
             os.mkdir(images_dir)
 
         # Copy packaging\* into project dir
-        packaging_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+        initial_dirname = os.path.dirname(os.path.abspath(__file__))
+        if os.path.isfile(initial_dirname):
+            print "UP A DIR"
+            initial_dirname = os.path.dirname(initial_dirname)
+        packaging_dir = os.path.join(initial_dirname,
                                      'packaging')
         for filename in os.listdir(packaging_dir):
             if not os.path.exists(os.path.join(self._path, filename)):

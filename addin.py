@@ -1,5 +1,4 @@
 import datetime
-import hashlib
 import itertools
 import random
 import os
@@ -11,10 +10,16 @@ import xml.dom.minidom
 
 NAMESPACE = "{http://schemas.esri.com/Desktop/AddIns}"
 
-def makeid(prefix="id"):
-    myint = int(time.time())
-    st = "%s-%05x" % (prefix, myint)
-    return prefix + hashlib.md5(st).hexdigest()[:16]
+def makeid(prefix="id", seen=set()):
+    if prefix[-1].isdigit():
+        newnum = int(''.join(char for char in prefix if char.isdigit()))
+        prefix = ''.join(char for char in prefix if not char.isdigit())
+        seen.add(newnum)
+    num = 1
+    while num in seen:
+        num += 1
+    seen.add(num)
+    return prefix + str(num)
 
 class XMLSerializable(object):
     __registry__ = {}
@@ -64,6 +69,9 @@ class XMLAttrMap(XMLSerializable):
                 instance.items.append(XMLSerializable.loadNode(item, id_cache))
         if 'id' in node.attrib and isinstance(id_cache, dict):
             id_cache[node.attrib['id']] = instance
+            makeid(node.attrib['id'])
+        if 'class' in node.attrib:
+            makeid(node.attrib['class'])
         help_node = node.find(NAMESPACE+"Help")
         if help_node is not None:
             instance.help_heading = help_node.attrib.get('heading', '')

@@ -5,7 +5,7 @@
     <object class="AddinMakerWindow" name="addin_window" base="EditFrame">
         <extracode>_msize = wx.Size(700, 550)</extracode>
         <style>wxDEFAULT_FRAME_STYLE</style>
-        <icon>images\AddInDesktop48.png</icon>
+        <icon>images\AddInDesktop.ico</icon>
         <title>ArcGIS Python AddIn Wizard</title>
         <centered>1</centered>
         <extraproperties>

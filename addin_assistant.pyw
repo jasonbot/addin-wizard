@@ -108,8 +108,12 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
             menucmd = controlcontainermenu.Append(-1, "New Menu")
             controlcontainermenu.Bind(wx.EVT_MENU, ItemAppender(tree, selection, item, addin.Menu, self.save_button), menucmd)
         if isinstance(item, addin.Menu):
-            multiitemcmd = controlcontainermenu.Append(-1, "New MultiItem")
-            controlcontainermenu.Bind(wx.EVT_MENU, ItemAppender(tree, selection, item, addin.MultiItem, self.save_button), multiitemcmd)
+            pass
+            #multiitemcmd = controlcontainermenu.Append(-1, "New MultiItem")
+            #controlcontainermenu.Bind(wx.EVT_MENU, 
+            #                          ItemAppender(tree, selection, item, 
+            #                                       addin.MultiItem, self.save_button), 
+            #                                       multiitemcmd)
         else:
             toolcmd = controlcontainermenu.Append(-1, "New Tool")
             controlcontainermenu.Bind(wx.EVT_MENU, ItemAppender(tree, selection, item, addin.Tool, self.save_button), toolcmd)

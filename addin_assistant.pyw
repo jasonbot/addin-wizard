@@ -23,11 +23,14 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
         self._selected_data = None
         self.contents_tree.Bind(wx.EVT_RIGHT_DOWN, self.TreePopupRClick)
         self.contents_tree.Bind(wx.EVT_CONTEXT_MENU, self.TreePopup)
-        self.SelectFolder(None)
 
         self._newextensionid = wx.NewId()
         self._newmenuid = wx.NewId()
         self._newtoolbarid = wx.NewId()
+
+    def Show(self):
+        super(AddinMakerAppWindow, self).Show()
+        self.SelectFolder(None)
 
     def AddExtension(self, event):
         extension = addin.Extension()

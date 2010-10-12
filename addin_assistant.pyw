@@ -3,6 +3,7 @@ import addin_ui
 import os
 import re
 import sys
+import traceback
 import wx
 
 class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
@@ -90,11 +91,12 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                 try:
                     new_item = self.cls()
                     self.item.items.append(new_item)
-                    toolbaritem = self.tree.AppendItem(self.selection, getattr(new_item, 'caption', str(new_item)))
+                    toolbaritem = self.tree.AppendItem(self.selection, getattr(new_item, 'caption', unicode(new_item)))
                     self.tree.SetItemPyData(toolbaritem, new_item)
                     self.tree.SelectItem(toolbaritem, True)
                     self.save_button.Enable(True)
                 except Exception as e:
+                    traceback.print_exc()
                     print e
 
         tree = self.contents_tree
@@ -128,11 +130,11 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
     def loadTreeView(self):
         def populate(parent, item):
             child = self.contents_tree.AppendItem(parent, 
-                                                  str(getattr(item, 
+                                                  unicode(getattr(item, 
                                                               'caption', 
                                                               getattr(item, 
                                                                       'name', 
-                                                                      str(item)))))
+                                                                      unicode(item)))))
             self.contents_tree.SetItemPyData(child, item)
             if hasattr(item, 'items'):
                 for child_item in item.items:
@@ -165,7 +167,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
 
     def loadProject(self):
         if getattr(self.project, 'warning', None):
-            msgdlg = wx.MessageDialog(self, str(self.project.warning),
+            msgdlg = wx.MessageDialog(self, unicode(self.project.warning),
                                             'Project Information', 
                                             wx.OK | wx.ICON_INFORMATION)
             msgdlg.ShowModal()
@@ -204,6 +206,8 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
             try:
                 self.project = addin.PythonAddinProjectDirectory(self.path)
             except Exception as e:
+                traceback.print_exc()
+                print repr(e.message)
                 errdlg = wx.MessageDialog(self, e.message,
                                                 'Error initializing addin', 
                                                 wx.OK | wx.ICON_ERROR)
@@ -269,7 +273,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
         sizer = self.item_property_panel.GetSizer()
         sizer.Clear(True)
         if hasattr(self._selected_data, '__doc__') and self._selected_data.__doc__:
-            st = wx.StaticText(self.item_property_panel, -1, str(self._selected_data.__doc__))
+            st = wx.StaticText(self.item_property_panel, -1, unicode(self._selected_data.__doc__))
             st.SetFont(wx.Font(16, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
             sizer.Add(st, 0, wx.ALL, 8)
         pythonliteral = re.compile("^[_A-Za-z][_A-Za-z0-9]*$").match
@@ -279,34 +283,34 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                 return True
             except:
                 return False
-        proplist = [p for p in (('name', 'Name', str, None), 
-                                ('caption', 'Caption', str, None), 
-                                ('klass', 'Class Name', str, pythonliteral), 
-                                ('id', 'ID (Variable Name)', str, pythonliteral),
-                                ('description', 'Description', str, None),
-                                ('tip', 'Tooltip', str, None),
-                                ('message', 'Message', str, None),
-                                ('hint_text', 'Hint Text', str, None),
-                                ('help_heading', 'Help Heading', str, None),
-                                ('help_string', 'Help Content', str, None),
+        proplist = [p for p in (('name', 'Name', unicode, None), 
+                                ('caption', 'Caption', unicode, None), 
+                                ('klass', 'Class Name', unicode, pythonliteral), 
+                                ('id', 'ID (Variable Name)', unicode, pythonliteral),
+                                ('description', 'Description', unicode, None),
+                                ('tip', 'Tooltip', unicode, None),
+                                ('message', 'Message', unicode, None),
+                                ('hint_text', 'Hint Text', unicode, None),
+                                ('help_heading', 'Help Heading', unicode, None),
+                                ('help_string', 'Help Content', unicode, None),
                                 ('editable', 'Editable', bool, None),
                                 ('separator', 'Has Separator', bool, None),
                                 ('show_initially', 'Show Initially', bool, None),
                                 ('auto_load', 'Load Automatically', bool, None),
                                 ('menu_style', 'Menu Style', bool, None),
                                 ('shortcut_menu', 'Is Shortcut Menu', bool, None),
-                                ('columns', 'Column Count', str, isinteger),
+                                ('columns', 'Column Count', unicode, isinteger),
                                 ('image', 'Image for Control', wx.Bitmap, None)) 
                                     if hasattr(self._selected_data, p[0])]
         for prop, caption, datatype, validator in proplist:
             # This is all kind of hairy, sorry
             newsizer = wx.BoxSizer(wx.HORIZONTAL)
             # Text entry
-            if datatype in (str, int):
+            if datatype in (unicode, int):
                 st = wx.StaticText(self.item_property_panel, -1, caption + ":", style=wx.ALIGN_RIGHT)
                 st.SetMinSize((175, 16))
                 newsizer.Add(st, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 2)
-                text = wx.TextCtrl(self.item_property_panel, -1, str(getattr(self._selected_data, prop, '')) or '')
+                text = wx.TextCtrl(self.item_property_panel, -1, unicode(getattr(self._selected_data, prop, '')) or '')
                 text.SetBackgroundColour('White')
                 class edittext(object):
                     def __init__(self, edit_object, command, app, propname, validator, datatype):
@@ -322,11 +326,12 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                             try:
                                 setattr(self.edit_object, self.propname, self.datatype(newvalue))
                             except Exception as e:
+                                traceback.print_exc()
                                 print e
                             self.app.contents_tree.SetItemText(self.app.contents_tree.GetSelection(), 
                                                                getattr(self.edit_object, 'caption', 
                                                                    getattr(self.edit_object, 'name', 
-                                                                       str(self.edit_object))))
+                                                                       unicode(self.edit_object))))
                             self.app.save_button.Enable(True)
                             self.command.SetBackgroundColour('White')
                             self.app.Refresh()
@@ -405,7 +410,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                 newsizer.Add(choosefilebutton, 1, wx.ALL|wx.EXPAND, 0)
             # WHO KNOWS!
             else:
-                newsizer.Add(wx.StaticText(self.item_property_panel, -1, caption + ": " + str(getattr(self._selected_data, prop))), 0, wx.EXPAND)
+                newsizer.Add(wx.StaticText(self.item_property_panel, -1, caption + ": " + unicode(getattr(self._selected_data, prop))), 0, wx.EXPAND)
             sizer.Add(newsizer, 0, wx.EXPAND|wx.BOTTOM, 2)
         sizer.Layout()
         self.Refresh()
@@ -462,6 +467,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
             self.project.save()
             self.save_button.Enable(False)
         except Exception as e:
+            traceback.print_exc()
             print e
 
     def TreePopupRClick(self, event):

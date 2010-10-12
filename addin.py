@@ -47,7 +47,7 @@ class XMLAttrMap(XMLSerializable):
                 if isinstance(value, bool):
                     value = str(value).lower()
                 else:
-                    value = str(value)
+                    value = unicode(value)
                 node.attrib[attr_node] = value
         node.tail = "\n        "
     @classmethod
@@ -392,7 +392,7 @@ class PythonAddin(object):
                 new_file = path + "_" + str(new_index) + ext
             #shutil.copyfile(addin_py, new_file)
             new_addin.backup_data = (addin_py, new_file)
-            new_addin.warning = "Python script {0} already exists. Will create a backup as {1} upon first save.".format(addin_py, new_file)
+            new_addin.warning = u"Python script {0} already exists. Will create a backup as {1} upon first save.".format(addin_py, new_file)
         app_node = addin_node.getchildren()[0]
         new_addin.app = app_node.tag[len(NAMESPACE):]
         for command in app_node.find(NAMESPACE+"Commands").getchildren():
@@ -467,17 +467,18 @@ class PythonAddinProjectDirectory(object):
     def __init__(self, path):
         self._path = path
         if not os.path.exists(path):
-            raise IOError("{0} does not exist. Please select a directory that exists.".format(path))
+            raise IOError(u"{0} does not exist. Please select a directory that exists.".format(path))
         listing = os.listdir(path)
         if listing:
             if not all(item in listing for item in ('config.xml', 'Install', 'Images')):
-                raise ValueError("{0} is not empty. Please select an empty directory to host this new addin.".format(path))
+                raise ValueError(u"{0} is not empty. Please select an empty directory to host this new addin.".format(path))
             else:
                 #raise ValueError("{0} exists and is a valid project directory, but loading doesn't work yet.")
                 self.addin = PythonAddin.fromXML(os.path.join(self._path, 'config.xml'))
                 self.warning = getattr(self.addin, 'warning', None)
         else:
-            self.addin = PythonAddin("Python Addin", "New Addin", os.path.basename(path) + "_addin")
+            addin_name = ''.join(x for x in os.path.basename(path) if x.isalpha())
+            self.addin = PythonAddin("Python Addin", "New Addin", (addin_name if addin_name else 'python') + "_addin")
     def save(self):
         # Make install/images dir
         install_dir = os.path.join(self._path, 'Install')

@@ -6,7 +6,7 @@
         <extracode>_msize = wx.Size(700, 550)</extracode>
         <style>wxDEFAULT_FRAME_STYLE</style>
         <icon>images\AddInDesktop.ico</icon>
-        <title>ArcGIS Python AddIn Wizard</title>
+        <title>ArcGIS Python Add-In Wizard</title>
         <centered>1</centered>
         <extraproperties>
             <property name="MinSize">_msize</property>
@@ -30,7 +30,7 @@
                             <object class="wxStaticText" name="title_label" base="EditStaticText">
                                 <style>wxALIGN_RIGHT</style>
                                 <attribute>1</attribute>
-                                <label>Python AddIn Wizard</label>
+                                <label>Python Add-In Wizard</label>
                                 <font>
                                     <size>16</size>
                                     <family>default</family>
@@ -93,7 +93,7 @@
                                     <style>0</style>
                                     <tabs>
                                         <tab window="notebook_1_pane_1">Project Settings</tab>
-                                        <tab window="notebook_1_pane_2">AddIn Contents</tab>
+                                        <tab window="notebook_1_pane_2">Add-In Contents</tab>
                                     </tabs>
                                     <events>
                                         <handler event="EVT_NOTEBOOK_PAGE_CHANGING">ChangeTab</handler>

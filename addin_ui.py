@@ -23,7 +23,7 @@ class AddinMakerWindow(wx.Frame):
         self.logo_panel = wx.Panel(self, -1)
         self.properties_rows_holder_staticbox = wx.StaticBox(self.notebook_1_pane_1, -1, "Project Properties:")
         self.title_panel = wx.Panel(self, -1)
-        self.title_label = wx.StaticText(self.title_panel, -1, "Python AddIn Wizard", style=wx.ALIGN_RIGHT)
+        self.title_label = wx.StaticText(self.title_panel, -1, "Python Add-In Wizard", style=wx.ALIGN_RIGHT)
         self.static_line_3 = wx.StaticLine(self, -1)
         self.logo_bitmap = wx.StaticBitmap(self.logo_panel, -1, wx.Bitmap("images\\AddInDesktop64.png", wx.BITMAP_TYPE_ANY))
         self.folder_label = wx.StaticText(self.notebook_1_pane_1, -1, "Working Folder:", style=wx.ALIGN_RIGHT)
@@ -74,7 +74,7 @@ class AddinMakerWindow(wx.Frame):
 
     def __set_properties(self):
         # begin wxGlade: AddinMakerWindow.__set_properties
-        self.SetTitle("ArcGIS Python AddIn Wizard")
+        self.SetTitle("ArcGIS Python Add-In Wizard")
         _icon = wx.EmptyIcon()
         _icon.CopyFromBitmap(wx.Bitmap("images\\AddInDesktop48.png", wx.BITMAP_TYPE_ANY))
         self.SetIcon(_icon)
@@ -156,7 +156,7 @@ class AddinMakerWindow(wx.Frame):
         items_sizer.Add(self.item_property_panel, 1, wx.EXPAND, 0)
         self.notebook_1_pane_2.SetSizer(items_sizer)
         self.tabs_notebook.AddPage(self.notebook_1_pane_1, "Project Settings")
-        self.tabs_notebook.AddPage(self.notebook_1_pane_2, "AddIn Contents")
+        self.tabs_notebook.AddPage(self.notebook_1_pane_2, "Add-In Contents")
         splitter_sizer.Add(self.tabs_notebook, 1, wx.EXPAND, 4)
         content_sizer.Add(splitter_sizer, 1, wx.EXPAND, 4)
         main_sizer.Add(content_sizer, 1, wx.EXPAND, 0)

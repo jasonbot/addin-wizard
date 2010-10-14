@@ -198,7 +198,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
 
     def SelectFolder(self, event):
         import traceback
-        dlg = wx.DirDialog(self, "Choose a directory to use as an AddIn project root:", 
+        dlg = wx.DirDialog(self, "Choose a directory to use as an Add-In project root:", 
                            style=wx.DD_DEFAULT_STYLE)
         dlg.SetPath(wx.StandardPaths.Get().GetDocumentsDir())
         if dlg.ShowModal() == wx.ID_OK:
@@ -209,7 +209,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                 traceback.print_exc()
                 print repr(e.message)
                 errdlg = wx.MessageDialog(self, e.message,
-                                                'Error initializing addin', 
+                                                'Error initializing Add-In', 
                                                 wx.OK | wx.ICON_ERROR)
                 errdlg.ShowModal()
                 errdlg.Destroy()

@@ -83,8 +83,12 @@ class HasPython(object):
     def python(self):
         methods = getattr(self, '__python_methods__', [])
         method_string = "\n".join(
-            "    def {0}({1}):\n        pass".format(method, ", ".join(args))
-                for method, args in methods
+            "    def {0}({1}):\n{2}        pass".format(method, 
+                                                        ", ".join(args),
+                                                        "        {0}\n".format(repr(doc)) 
+                                                                               if doc
+                                                                               else '')
+                for method, doc, args in methods
         )
         init_code = getattr(self, '__init_code__', '')
         if init_code:
@@ -115,20 +119,20 @@ class Extension(XMLAttrMap, HasPython):
                     'category': 'category',
                     'showInExtensionDialog': 'show_in_dialog',
                     'autoLoad': 'auto_load'}
-    __python_methods__ = [('startup', ['self']),
-                          ('shutdown', ['self']),
-                          ('activeViewChanged', ['self']),
-                          ('mapsChanged', ['self']),
-                          ('newDocument', ['self']),
-                          ('openDocument', ['self']),
-                          ('beforeCloseDocument', ['self']),
-                          ('closeDocument', ['self']),
-                          ('beforePageIndexExtentChange', ['self', 'old_id']),
-                          ('pageIndexExtentChanged', ['self', 'new_id']),
-                          ('contentsChanged', ['self']),
-                          ('contentsCleared', ['self']),
-                          ('focusMapChanged', ['self']),
-                          ('spatialReferenceChanged', ['self']),
+    __python_methods__ = [('startup', '', ['self']),
+                          ('shutdown', '', ['self']),
+                          ('activeViewChanged', '', ['self']),
+                          ('mapsChanged', '', ['self']),
+                          ('newDocument', '', ['self']),
+                          ('openDocument', '', ['self']),
+                          ('beforeCloseDocument', '', ['self']),
+                          ('closeDocument', '', ['self']),
+                          ('beforePageIndexExtentChange', '', ['self', 'old_id']),
+                          ('pageIndexExtentChanged', '', ['self', 'new_id']),
+                          ('contentsChanged', '', ['self']),
+                          ('contentsCleared', '', ['self']),
+                          ('focusMapChanged', '', ['self']),
+                          ('spatialReferenceChanged', '', ['self']),
                           ]
     def __init__(self, name=None, description=None, klass=None, id=None, category=None):
         self.name = name or 'New Extension'
@@ -212,7 +216,7 @@ class Toolbar(ControlContainer):
 @XMLSerializable.registerType
 class Button(XMLAttrMap, UIControl):
     "Button"
-    __python_methods__ = [('onClick', ['self'])]
+    __python_methods__ = [('onClick', '', ['self'])]
     __init_code__ = ['self.enabled = True', 'self.checked = False']
     __attr_map__ = {'caption': 'caption' ,
                     'class': 'klass',
@@ -256,10 +260,10 @@ class ComboBox(Button):
     @property
     def __init_code__(self):
         return ['self.items = ["item1", "item2"]', 'self.editable = %r' % self.editable]
-    __python_methods__ = [('onSelChange',  ['self', 'selection']),
-                          ('onEditChange', ['self', 'text']),
-                          ('onFocus', ['self', 'focused']),
-                          ('onEnter', ['self'])
+    __python_methods__ = [('onSelChange',  '', ['self', 'selection']),
+                          ('onEditChange', '', ['self', 'text']),
+                          ('onFocus', '', ['self', 'focused']),
+                          ('onEnter', '', ['self'])
                          ]
     def __init__(self, klass=None, id=None, category=None, caption=None):
         self.klass = klass or makeid("ComboBoxClass")
@@ -278,16 +282,17 @@ class ComboBox(Button):
 @XMLSerializable.registerType
 class Tool(Button):
     "Python Tool"
-    __python_methods__ = [('onMouseDown', ['self', 'x', 'y', 'button', 'shift']),
-                          ('onMouseDownMap', ['self', 'x', 'y', 'button', 'shift']),
-                          ('onMouseUp', ['self', 'x', 'y', 'button', 'shift']),
-                          ('onMouseUpMap', ['self', 'x', 'y', 'button', 'shift']),
-                          ('onMouseMove', ['self', 'x', 'y', 'button', 'shift']),
-                          ('onMouseMoveMap', ['self', 'x', 'y', 'button', 'shift']),
-                          ('onDblClick', ['self']),
-                          ('onKeyDown', ['self', 'keycode', 'shift']),
-                          ('onKeyUp', ['self', 'keycode', 'shift']),
-                          ('deactivate', ['self'])
+    __init_code__ = ['self.enabled = True']
+    __python_methods__ = [('onMouseDown', '', ['self', 'x', 'y', 'button', 'shift']),
+                          ('onMouseDownMap', '', ['self', 'x', 'y', 'button', 'shift']),
+                          ('onMouseUp', '', ['self', 'x', 'y', 'button', 'shift']),
+                          ('onMouseUpMap', '', ['self', 'x', 'y', 'button', 'shift']),
+                          ('onMouseMove', '', ['self', 'x', 'y', 'button', 'shift']),
+                          ('onMouseMoveMap', '', ['self', 'x', 'y', 'button', 'shift']),
+                          ('onDblClick', '', ['self']),
+                          ('onKeyDown', '', ['self', 'keycode', 'shift']),
+                          ('onKeyUp', '', ['self', 'keycode', 'shift']),
+                          ('deactivate', '', ['self'])
                           ]
     def __init__(self, caption=None, klass=None, category=None, image=None,
                  tip=None, message=None, id=None):
@@ -305,7 +310,7 @@ class MultiItem(XMLAttrMap, UIControl):
     __attr_map__ = {'id': 'id',
                     'class': 'klass',
                     'hasSeparator': 'separator'}
-    __python_methods__ = [('onItemClick', ['self'])]
+    __python_methods__ = [('onItemClick', '', ['self'])]
     __init_code__ = ['self.items = ["item1", "item2"]']
     def __init__(self, klass=None, id=None, separator=None):
         self.klass = klass or makeid("MultiItemClass")

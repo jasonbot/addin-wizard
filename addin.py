@@ -252,10 +252,11 @@ class ComboBox(Button):
                     'message': 'message',
                     'sizeString': 'size_string',
                     'itemSizeString': 'item_size_string',
-                    'hintText': 'hint_text'}
+                    'hintText': 'hint_text',
+                    'rows': 'rows'}
     @property
     def __init_code__(self):
-        return ['self.items = ["item1", "item2"]', 'self.editable = %r' % self.editable]
+        return ['self.items = ["item1", "item2"]', 'self.editable = %r' % self.editable, 'self.enabled = True']
     __python_methods__ = [('onSelChange',  ['self', 'selection']),
                           ('onEditChange', ['self', 'text']),
                           ('onFocus', ['self', 'focused']),
@@ -274,6 +275,7 @@ class ComboBox(Button):
         self.item_size_string = "WWWWWW"
         self.hint_text = ''
         self.editable = True
+        self.rows = 4
 
 @XMLSerializable.registerType
 class Tool(Button):

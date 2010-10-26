@@ -300,6 +300,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                                 ('menu_style', 'Menu Style', bool, None),
                                 ('shortcut_menu', 'Is Shortcut Menu', bool, None),
                                 ('columns', 'Column Count', unicode, isinteger),
+                                ('rows', 'Row Count', unicode, isinteger),
                                 ('image', 'Image for Control', wx.Bitmap, None)) 
                                     if hasattr(self._selected_data, p[0])]
         for prop, caption, datatype, validator in proplist:

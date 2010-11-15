@@ -134,6 +134,9 @@ class Extension(XMLAttrMap, HasPython):
                           ('focusMapChanged', '', ['self']),
                           ('spatialReferenceChanged', '', ['self']),
                           ]
+    @property
+    def __init_code__(self):
+        return ['self.enabled = %r' % self.enabled]
     def __init__(self, name=None, description=None, klass=None, id=None, category=None):
         self.name = name or 'New Extension'
         self.description = description or ''
@@ -142,6 +145,7 @@ class Extension(XMLAttrMap, HasPython):
         self.category = category or ''
         self.show_in_dialog = True
         self.auto_load = True
+        self.enabled = True
     def xmlNode(self, parent):
         newnode = xml.etree.ElementTree.SubElement(parent, 
                                                    self.__class__.__name__)

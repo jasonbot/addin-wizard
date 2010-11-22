@@ -382,7 +382,7 @@ class PythonAddin(object):
         doc = xml.etree.ElementTree.parse(xmlfile)
         root = doc.getroot()
         assert root.tag == NAMESPACE+'ESRI.Configuration', root.tag
-        new_addin.name = (root.find(NAMESPACE+"Name").text or '').strip()
+        new_addin.name = (root.find(NAMESPACE+"productName").text or '').strip()
         new_addin.guid = (root.find(NAMESPACE+"AddInID").text or '').strip()
         new_addin.description = (root.find(NAMESPACE+"Description").text or '').strip()
         new_addin.version = (root.find(NAMESPACE+"Version").text or '').strip()
@@ -422,7 +422,7 @@ class PythonAddin(object):
         root = xml.etree.ElementTree.Element('ESRI.Configuration',
                 {'xmlns': "http://schemas.esri.com/Desktop/AddIns",
                  'xmlns:xsi': "http://www.w3.org/2001/XMLSchema-instance"})
-        xml.etree.ElementTree.SubElement(root, 'Name').text = self.name
+        xml.etree.ElementTree.SubElement(root, 'productName').text = self.name
         xml.etree.ElementTree.SubElement(root, 'AddInID').text = self.guid
         xml.etree.ElementTree.SubElement(root, 'Description').text = self.description
         xml.etree.ElementTree.SubElement(root, 'Version').text = self.version

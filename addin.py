@@ -391,6 +391,7 @@ class PythonAddin(object):
         new_addin.company = (root.find(NAMESPACE+"Company").text or '').strip()
         addin_node = root.find(NAMESPACE+"AddIn")
         new_addin.addinfile = addin_node.attrib.get('library', '')
+        new_addin.namespace = addin_node.attrib.get('namespace', '')
         projectpath = os.path.join(os.path.dirname(xmlfile), 'Install', os.path.dirname(new_addin.addinfile))
         if os.path.isfile(os.path.join(projectpath, new_addin.addinfile)):
             addin_py = os.path.join(projectpath, new_addin.addinfile)

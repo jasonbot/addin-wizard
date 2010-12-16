@@ -382,7 +382,13 @@ class PythonAddin(object):
         doc = xml.etree.ElementTree.parse(xmlfile)
         root = doc.getroot()
         assert root.tag == NAMESPACE+'ESRI.Configuration', root.tag
-        new_addin.name = (root.find(NAMESPACE+"productName").text or '').strip()
+        name_node = root.find(NAMESPACE+"Name")
+        if name_node is None:
+            name_node = root.find(NAMESPACE+"productName")
+        if name_node is not None:
+            new_addin.name = (root.find(NAMESPACE+"productName").text or '').strip()
+        else:
+            new_addin.name = "Untitled"
         new_addin.guid = (root.find(NAMESPACE+"AddInID").text or '').strip()
         new_addin.description = (root.find(NAMESPACE+"Description").text or '').strip()
         new_addin.version = (root.find(NAMESPACE+"Version").text or '').strip()

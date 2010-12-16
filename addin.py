@@ -386,7 +386,7 @@ class PythonAddin(object):
         if name_node is None:
             name_node = root.find(NAMESPACE+"productName")
         if name_node is not None:
-            new_addin.name = (root.find(NAMESPACE+"productName").text or '').strip()
+            new_addin.name = name_node.text.strip()
         else:
             new_addin.name = "Untitled"
         new_addin.guid = (root.find(NAMESPACE+"AddInID").text or '').strip()

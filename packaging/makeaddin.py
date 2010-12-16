@@ -7,7 +7,8 @@ out_zip_name = os.path.join(current_path,
                             os.path.basename(current_path) + ".esriaddin")
 
 zip_file = zipfile.ZipFile(out_zip_name, 'w')
-zip_file.write(os.path.join(current_path, 'config.xml'), 'config.xml')
+for filename in ('config.xml', 'README.txt', 'makeaddin.py'):
+    zip_file.write(os.path.join(current_path, filename), filename)
 dirs_to_add = ['Images', 'Install']
 for directory in dirs_to_add:
     for (path, dirs, files) in os.walk(os.path.join(current_path, directory)):

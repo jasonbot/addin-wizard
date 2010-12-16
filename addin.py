@@ -120,7 +120,6 @@ class Extension(XMLAttrMap, HasPython):
                     'showInExtensionDialog': 'show_in_dialog',
                     'autoLoad': 'auto_load'}
     __python_methods__ = [('startup', '', ['self']),
-                          ('shutdown', '', ['self']),
                           ('activeViewChanged', '', ['self']),
                           ('mapsChanged', '', ['self']),
                           ('newDocument', '', ['self']),
@@ -130,8 +129,6 @@ class Extension(XMLAttrMap, HasPython):
                           ('beforePageIndexExtentChange', '', ['self', 'old_id']),
                           ('pageIndexExtentChanged', '', ['self', 'new_id']),
                           ('contentsChanged', '', ['self']),
-                          ('contentsCleared', '', ['self']),
-                          ('focusMapChanged', '', ['self']),
                           ('spatialReferenceChanged', '', ['self']),
                           ]
     @property

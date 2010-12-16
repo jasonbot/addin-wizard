@@ -376,8 +376,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                             self.app, message="Choose an image file for control",
                             defaultDir=default_path, 
                             defaultFile="",
-                            wildcard="All Files (*.*)|*.*|"
-                                     "GIF images (*.gif)|*.gif|"
+                            wildcard="GIF images (*.gif)|*.gif|"
                                      "PNG images (*.png)|*.png|"
                                      "BMP images (*.bmp)|*.bmp",
                             style=wx.OPEN)
@@ -435,8 +434,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                             if self.project.addin.image
                                 else self.path), 
             defaultFile="",
-            wildcard="All Files (*.*)|*.*|"
-                     "GIF images (*.gif)|*.gif|"
+            wildcard="GIF images (*.gif)|*.gif|"
                      "PNG images (*.png)|*.png|"
                      "BMP images (*.bmp)|*.bmp",
             style=wx.OPEN)

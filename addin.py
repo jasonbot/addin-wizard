@@ -285,7 +285,11 @@ class ComboBox(Button):
 @XMLSerializable.registerType
 class Tool(Button):
     "Python Tool"
-    __init_code__ = ['self.enabled = True']
+    __init_code__ = ['self.enabled = True', 
+                     'self.shape = "NONE" # Can set to "Line", '
+                                            '"Circle" or "Rectangle" '
+                                            'for interactive shape drawing '
+                                            'and to activate onLine etc.']
     __python_methods__ = [('onMouseDown', '', ['self', 'x', 'y', 'button', 'shift']),
                           ('onMouseDownMap', '', ['self', 'x', 'y', 'button', 'shift']),
                           ('onMouseUp', '', ['self', 'x', 'y', 'button', 'shift']),
@@ -295,7 +299,10 @@ class Tool(Button):
                           ('onDblClick', '', ['self']),
                           ('onKeyDown', '', ['self', 'keycode', 'shift']),
                           ('onKeyUp', '', ['self', 'keycode', 'shift']),
-                          ('deactivate', '', ['self'])
+                          ('deactivate', '', ['self']),
+                          ('onCircle', '', ['self', 'circle_geometry']),
+                          ('onLine', '', ['self', 'line_geometry']),
+                          ('onRectangle', '', ['self', 'rectangle_geometry']),
                           ]
     def __init__(self, caption=None, klass=None, category=None, image=None,
                  tip=None, message=None, id=None):

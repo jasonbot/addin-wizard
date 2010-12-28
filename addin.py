@@ -112,7 +112,7 @@ class UIControl(Command, XMLSerializable, HasPython):
 @XMLSerializable.registerType
 class Extension(XMLAttrMap, HasPython):
     "Extension"
-    __attr_map__ = {'name': 'name',
+    __attr_map__ = {'productName': 'name',
                     'description': 'description',
                     'class': 'klass',
                     'id': 'id',

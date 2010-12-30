@@ -388,7 +388,7 @@ class PythonAddin(object):
         assert root.tag == NAMESPACE+'ESRI.Configuration', root.tag
         name_node = root.find(NAMESPACE+"Name")
         if name_node is None:
-            name_node = root.find(NAMESPACE+"productName")
+            name_node = root.find(NAMESPACE+"Name")
         if name_node is not None:
             new_addin.name = name_node.text.strip()
         else:
@@ -433,7 +433,7 @@ class PythonAddin(object):
         root = xml.etree.ElementTree.Element('ESRI.Configuration',
                 {'xmlns': "http://schemas.esri.com/Desktop/AddIns",
                  'xmlns:xsi': "http://www.w3.org/2001/XMLSchema-instance"})
-        xml.etree.ElementTree.SubElement(root, 'productName').text = self.name
+        xml.etree.ElementTree.SubElement(root, 'Name').text = self.name
         xml.etree.ElementTree.SubElement(root, 'AddInID').text = self.guid
         xml.etree.ElementTree.SubElement(root, 'Description').text = self.description
         xml.etree.ElementTree.SubElement(root, 'Version').text = self.version

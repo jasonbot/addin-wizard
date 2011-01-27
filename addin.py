@@ -484,7 +484,7 @@ class PythonAddin(object):
                 yield aitem
     @property
     def python(self):
-        return "import arcpy\n\n" + "\n\n".join(x.python for x in self if hasattr(x, 'python'))
+        return "import arcpy\nimport pythonaddins\n\n" + "\n\n".join(x.python for x in self if hasattr(x, 'python'))
 
 class PythonAddinProjectDirectory(object):
     def __init__(self, path):

@@ -131,10 +131,13 @@ class Extension(XMLAttrMap, HasPython):
                           ('pageIndexExtentChanged', '', ['self', 'new_id']),
                           ('contentsChanged', '', ['self']),
                           ('spatialReferenceChanged', '', ['self']),
+                          ('itemAdded', '', ['self', 'new_item']),
+                          ('itemDeleted', '', ['self', 'deleted_item']),
+                          ('itemReordered', '', ['self', 'reordered_item', 'new_index'])
                           ]
     @property
     def __init_code__(self):
-        return ['self.enabled = %r' % self.enabled]
+        return ['# For performance considerations, please remove all unused methods in this class.', 'self.enabled = %r' % self.enabled]
     def __init__(self, name=None, description=None, klass=None, id=None, category=None):
         self.name = name or 'New Extension'
         self.description = description or ''
@@ -178,7 +181,7 @@ class Menu(ControlContainer):
     def __init__(self, caption='Menu', top_level=False, shortcut_menu=False, separator=False, category=None, id=None):
         super(Menu, self).__init__()
         self.caption = caption or ''
-        self.top_level = bool(top_level)
+        self.top_level = True #bool(top_level)
         self.shortcut_menu = bool(shortcut_menu)
         self.separator = bool(separator)
         self.category = category or ''
@@ -514,7 +517,6 @@ class PythonAddinProjectDirectory(object):
         # Copy packaging\* into project dir
         initial_dirname = os.path.dirname(os.path.abspath(__file__))
         if os.path.isfile(initial_dirname):
-            print "UP A DIR"
             initial_dirname = os.path.dirname(initial_dirname)
         packaging_dir = os.path.join(initial_dirname,
                                      'packaging')

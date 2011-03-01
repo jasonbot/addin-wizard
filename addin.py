@@ -137,7 +137,8 @@ class Extension(XMLAttrMap, HasPython):
                           ]
     @property
     def __init_code__(self):
-        return ['# For performance considerations, please remove all unused methods in this class.', 'self.enabled = %r' % self.enabled]
+        return ['# For performance considerations, please remove all unused methods in this class.',
+                'self.enabled = %r' % self.enabled]
     def __init__(self, name=None, description=None, klass=None, id=None, category=None):
         self.name = name or 'New Extension'
         self.description = description or ''
@@ -265,7 +266,12 @@ class ComboBox(Button):
                     'rows': 'rows'}
     @property
     def __init_code__(self):
-        return ['self.items = ["item1", "item2"]', 'self.editable = %r' % self.editable, 'self.enabled = True']
+        return ['self.items = ["item1", "item2"]',
+                'self.editable = %r' % self.editable,
+                'self.enabled = True',
+                'self.hintText = %r' % self.hint_text,
+                'self.dropdownWidth = %r' % self.item_size_string,
+                'self.width = %r' % self.size_string]
     __python_methods__ = [('onSelChange',  '', ['self', 'selection']),
                           ('onEditChange', '', ['self', 'text']),
                           ('onFocus', '', ['self', 'focused']),
@@ -293,7 +299,7 @@ class Tool(Button):
                      'self.shape = "NONE" # Can set to "Line", '
                                             '"Circle" or "Rectangle" '
                                             'for interactive shape drawing '
-                                            'and to activate onLine etc.']
+                                            'and to activate the onLine/Polygon/Circle event sinks.']
     __python_methods__ = [('onMouseDown', '', ['self', 'x', 'y', 'button', 'shift']),
                           ('onMouseDownMap', '', ['self', 'x', 'y', 'button', 'shift']),
                           ('onMouseUp', '', ['self', 'x', 'y', 'button', 'shift']),

@@ -225,7 +225,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
             return
 
     def ProjectNameText(self, event):
-        newvalue = self.project_name.GetLabel()
+        newvalue = self.project_name.GetLabel().strip()
         if newvalue:
             self.project.addin.name = newvalue
             self.project_name.SetBackgroundColour('White')
@@ -254,7 +254,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
         event.Skip()
 
     def ProjectVersionText(self, event):
-        newvalue = self.project_version.GetLabel()
+        newvalue = self.project_version.GetLabel().strip()
         if newvalue:
             self.project.addin.version = newvalue
             self.project_version.SetBackgroundColour('White')
@@ -283,7 +283,9 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                 return True
             except:
                 return False
-        proplist = [p for p in (('name', 'Name', unicode, None), 
+        def nonemptystring(val):
+            return bool((val or '').strip())
+        proplist = [p for p in (('name', 'Name', unicode, nonemptystring), 
                                 ('caption', 'Caption', unicode, None), 
                                 ('klass', 'Class Name', unicode, pythonliteral), 
                                 ('id', 'ID (Variable Name)', unicode, pythonliteral),

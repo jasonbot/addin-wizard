@@ -286,7 +286,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
         def nonemptystring(val):
             return bool((val or '').strip())
         proplist = [p for p in (('name', 'Name', unicode, nonemptystring), 
-                                ('caption', 'Caption', unicode, None), 
+                                ('caption', 'Caption', unicode, nonemptystring), 
                                 ('klass', 'Class Name', unicode, pythonliteral), 
                                 ('id', 'ID (Variable Name)', unicode, pythonliteral),
                                 ('description', 'Description', unicode, None),

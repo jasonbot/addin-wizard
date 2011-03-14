@@ -14,7 +14,7 @@ for directory in dirs_to_add:
     for (path, dirs, files) in os.walk(os.path.join(current_path, directory)):
         archive_path = os.path.relpath(path, current_path)
         found_file = False
-        for file in files:
+        for file in (f for f in files if not f.lower().endswith('_backup.py')):
             archive_file = os.path.join(archive_path, file)
             print archive_file
             zip_file.write(os.path.join(path, file), archive_file)

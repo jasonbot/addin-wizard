@@ -230,7 +230,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
             self.project.addin.name = newvalue
             self.project_name.SetBackgroundColour('White')
         else:
-            self.project_name.SetBackgroundColour('#FFEEDD')
+            self.project_name.SetBackgroundColour('#FF8080')
         self.Refresh()
         self.save_button.Enable(True)
         event.Skip()
@@ -259,7 +259,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
             self.project.addin.version = newvalue
             self.project_version.SetBackgroundColour('White')
         else:
-            self.project_version.SetBackgroundColour('#FFEEDD')
+            self.project_version.SetBackgroundColour('#FF8080')
         self.Refresh()
         self.save_button.Enable(True)
         event.Skip()
@@ -337,7 +337,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                             self.command.SetBackgroundColour('White')
                             self.app.Refresh()
                         else:
-                            self.command.SetBackgroundColour('#FFEEDD')
+                            self.command.SetBackgroundColour('#FF8080')
                             self.app.Refresh()
                         event.Skip()
                 self.Bind(wx.EVT_TEXT, edittext(self._selected_data, text, self, prop, validator, datatype), text)

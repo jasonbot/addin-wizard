@@ -196,15 +196,38 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                 self.SaveProject(event)
         self.Destroy()
 
+    @property
+    def _path_file(self):
+        return os.path.join((os.environ.get('APPDATA', '') or 
+                                os.path.expanduser('~')), 
+                             '.ESRI.PythonAddinMaker.Path')
+    @property
+    def lastPath(self):
+        try:
+            if os.path.isfile(self._path_file):
+                new_path = open(self._path_file, 'rb').read()
+            if os.path.isdir(new_path):
+                return new_path
+        except:
+            pass
+        return wx.StandardPaths.Get().GetDocumentsDir()
+    @lastPath.setter
+    def lastPath(self, new_value):
+        try:
+            with open(self._path_file, 'wb') as out_path:
+                out_path.write(new_value)
+        except:
+            pass
     def SelectFolder(self, event):
         import traceback
         dlg = wx.DirDialog(self, "Choose a directory to use as an Add-In project root:", 
                            style=wx.DD_DEFAULT_STYLE)
-        dlg.SetPath(wx.StandardPaths.Get().GetDocumentsDir())
+        dlg.SetPath(self.lastPath)
         if dlg.ShowModal() == wx.ID_OK:
             self.path = dlg.GetPath()
             try:
-                self.project = addin.PythonAddinProjectDirectory(self.path)
+                self.project = addin.PythonAddinProjectDirectory(self.path, True)
+                self.lastPath = self.path
             except Exception as e:
                 traceback.print_exc()
                 print repr(e.message)
@@ -464,10 +487,21 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
             print
             print self.project.addin.python
             self.project.save()
+            if getattr(self.project.addin, 'warning', None):
+                msgdlg = wx.MessageDialog(self, unicode(self.project.addin.warning),
+                                                'Project Information', 
+                                                wx.OK | wx.ICON_INFORMATION)
+                msgdlg.ShowModal()
+                msgdlg.Destroy()
+                del self.project.addin.warning
             self.save_button.Enable(False)
         except Exception as e:
             traceback.print_exc()
             print e
+
+    def OpenFolder(self, event):
+        if getattr(self, 'path', None):
+            os.startfile(self.path)
 
     def TreePopupRClick(self, event):
         id = self.contents_tree.HitTest(event.GetPosition())[0]

@@ -3,6 +3,7 @@ import itertools
 import random
 import os
 import shutil
+import stat
 import time
 import uuid
 import xml.etree.ElementTree
@@ -346,7 +347,8 @@ class MultiItem(XMLAttrMap, UIControl):
 class PythonAddin(object):
     __apps__ = ('ArcMap', 'ArcCatalog', 'ArcGlobe', 'ArcScene')
     def __init__(self, name, description, namespace, author='Untitled',
-                 company='Untitled', version='0.1', image='', app='ArcMap'):
+                 company='Untitled', version='0.1', image='', app='ArcMap',
+                 backup_files = False):
         self.name = name
         self.description = description
         self.namespace = namespace
@@ -359,6 +361,9 @@ class PythonAddin(object):
         self.image = image
         self.addinfile = self.namespace + '.py'
         self.items = []
+        self.backup_files = backup_files
+        self.last_backup = 0.0
+        self.projectpath = ''
     def remove(self, target_item):
         def rm_(container_object, target_item):
             items = getattr(container_object, 'items', [])
@@ -390,8 +395,10 @@ class PythonAddin(object):
     def extensions(self):
         return [extension for extension in self.items if isinstance(extension, Extension)]
     @classmethod
-    def fromXML(cls, xmlfile):
+    def fromXML(cls, xmlfile, backup_files = False):
         new_addin = cls('unknown', 'unknown', 'unknown')
+        new_addin.backup_files = backup_files
+        new_addin.last_backup = 0.0
         id_cache = {}
         doc = xml.etree.ElementTree.parse(xmlfile)
         root = doc.getroot()
@@ -413,18 +420,7 @@ class PythonAddin(object):
         new_addin.addinfile = addin_node.attrib.get('library', '')
         new_addin.namespace = addin_node.attrib.get('namespace', '')
         projectpath = os.path.join(os.path.dirname(xmlfile), 'Install', os.path.dirname(new_addin.addinfile))
-        if os.path.isfile(os.path.join(projectpath, new_addin.addinfile)):
-            addin_py = os.path.join(projectpath, new_addin.addinfile)
-            path, ext = os.path.splitext(addin_py)
-
-            new_index = 1
-            new_file = path + "_" + str(new_index) + ext
-            while os.path.exists(new_file):
-                new_index += 1
-                new_file = path + "_" + str(new_index) + ext
-            #shutil.copyfile(addin_py, new_file)
-            new_addin.backup_data = (addin_py, new_file)
-            new_addin.warning = u"Python script {0} already exists. Will create a backup as {1} upon first save.".format(addin_py, new_file)
+        new_addin.projectpath = projectpath
         app_node = addin_node.getchildren()[0]
         new_addin.app = app_node.tag[len(NAMESPACE):]
         for command in app_node.find(NAMESPACE+"Commands").getchildren():
@@ -434,10 +430,20 @@ class PythonAddin(object):
                 new_addin.items.append(XMLSerializable.loadNode(item, id_cache))
         return new_addin
     def backup(self):
-        backup_data = getattr(self, 'backup_data', None)
-        if backup_data:
-            shutil.copyfile(*backup_data)
-        self.backup_data = None
+        addin_file = os.path.join(self.projectpath, self.addinfile)
+        print "--backup--", addin_file
+        if (self.backup_files and os.path.isfile(addin_file)
+                and os.stat(addin_file)[stat.ST_MTIME] > self.last_backup):
+            path, ext = os.path.splitext(addin_file)
+            new_index = 1
+            new_file = path + "_" + str(new_index) + ext
+            while os.path.exists(new_file):
+                new_index += 1
+                new_file = path + "_" + str(new_index) + ext
+            self.warning = u"Python script {0} already exists. Saving a backup as {1}.".format(addin_file, new_file)
+            shutil.copyfile(addin_file, new_file)
+        self.last_backup = time.time()
+        return self.addinfile
     @property
     def xml(self):
         root = xml.etree.ElementTree.Element('ESRI.Configuration',
@@ -496,8 +502,9 @@ class PythonAddin(object):
         return "import arcpy\nimport pythonaddins\n\n" + "\n\n".join(x.python for x in self if hasattr(x, 'python'))
 
 class PythonAddinProjectDirectory(object):
-    def __init__(self, path):
+    def __init__(self, path, backup_files = False):
         self._path = path
+        self.backup_files = backup_files
         if not os.path.exists(path):
             raise IOError(u"{0} does not exist. Please select a directory that exists.".format(path))
         listing = os.listdir(path)
@@ -505,12 +512,12 @@ class PythonAddinProjectDirectory(object):
             if not all(item in listing for item in ('config.xml', 'Install', 'Images')):
                 raise ValueError(u"{0} is not empty. Please select an empty directory to host this new addin.".format(path))
             else:
-                #raise ValueError("{0} exists and is a valid project directory, but loading doesn't work yet.")
-                self.addin = PythonAddin.fromXML(os.path.join(self._path, 'config.xml'))
+                self.addin = PythonAddin.fromXML(os.path.join(self._path, 'config.xml'), backup_files)
                 self.warning = getattr(self.addin, 'warning', None)
         else:
             addin_name = ''.join(x for x in os.path.basename(path) if x.isalpha())
-            self.addin = PythonAddin("Python Addin", "New Addin", (addin_name if addin_name else 'python') + "_addin")
+            self.addin = PythonAddin("Python Addin", "New Addin", (addin_name if addin_name else 'python') + "_addin",
+                                     backup_files = True)
     def save(self):
         # Make install/images dir
         install_dir = os.path.join(self._path, 'Install')
@@ -573,12 +580,14 @@ class PythonAddinProjectDirectory(object):
                 item_with_image.image = os.path.join('Images', os.path.basename(item_image))
 
         # Back up .py file if necessary
-        self.addin.backup()
+        filename = self.addin.backup()
         # Output XML and Python stub
         with open(os.path.join(self._path, 'config.xml'), 'wb') as out_handle:
             out_handle.write(self.addin.xml)
-        with open(os.path.join(install_dir, self.addin.addinfile), 'wb') as out_python:
+            self.addin.last_backup = time.time()
+        with open(os.path.join(install_dir, filename), 'wb') as out_python:
             out_python.write(self.addin.python)
+            self.addin.last_save = time.time()
 
 if __name__ == "__main__":
     myaddin = PythonAddin("My Addin", "This is a new addin", "myaddin")

@@ -120,7 +120,7 @@ class Extension(XMLAttrMap, HasPython):
                     'id': 'id',
                     'category': 'category',
                     'showInExtensionDialog': 'show_in_dialog',
-                    'autoLoad': 'auto_load'}
+                    'autoLoad': 'enabled'}
     __python_methods__ = [('startup', '', ['self']),
                           ('activeViewChanged', '', ['self']),
                           ('mapsChanged', '', ['self']),
@@ -147,7 +147,6 @@ class Extension(XMLAttrMap, HasPython):
         self.id = id or makeid("extension")
         self.category = category or ''
         self.show_in_dialog = True
-        self.auto_load = True
         self.enabled = True
     def xmlNode(self, parent):
         newnode = xml.etree.ElementTree.SubElement(parent, 

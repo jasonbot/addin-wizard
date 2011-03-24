@@ -320,7 +320,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                                 ('help_string', 'Help Content', unicode, None),
                                 ('separator', 'Has Separator', bool, None),
                                 ('show_initially', 'Show Initially', bool, None),
-                                ('auto_load', 'Load Automatically', bool, None),
+                                ('enabled', 'Load Automatically', bool, None),
                                 ('menu_style', 'Menu Style', bool, None),
                                 ('shortcut_menu', 'Is Shortcut Menu', bool, None),
                                 ('columns', 'Column Count', unicode, isinteger),

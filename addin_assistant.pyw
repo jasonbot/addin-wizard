@@ -300,6 +300,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
             st.SetFont(wx.Font(16, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
             sizer.Add(st, 0, wx.ALL, 8)
         pythonliteral = re.compile("^[_A-Za-z][_A-Za-z0-9]*$").match
+        namespacedpythonliteral = re.compile("^([_A-Za-z][_A-Za-z0-9]*[.])*[_A-Za-z][_A-Za-z0-9]+$").match
         def isinteger(val):
             try:
                 int(val)
@@ -311,7 +312,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
         proplist = [p for p in (('name', 'Name', unicode, nonemptystring), 
                                 ('caption', 'Caption', unicode, nonemptystring), 
                                 ('klass', 'Class Name', unicode, pythonliteral), 
-                                ('id', 'ID (Variable Name)', unicode, pythonliteral),
+                                ('id', 'ID (Variable Name)', unicode, namespacedpythonliteral),
                                 ('description', 'Description', unicode, None),
                                 ('tip', 'Tooltip', unicode, None),
                                 ('message', 'Message', unicode, None),

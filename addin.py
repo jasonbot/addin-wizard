@@ -1,6 +1,7 @@
 import datetime
 import itertools
 import random
+import operator
 import os
 import shutil
 import stat
@@ -22,6 +23,16 @@ def makeid(prefix="id", seen=set()):
     seen.add(num)
     return prefix + str(num)
 
+class DelayedGetter(object):
+    def __init__(self, id_to_get, id_cache):
+        self._id = id_to_get
+        self._cache = id_cache
+        #print "NEW GETTER", id_to_get
+    @property
+    def item(self):
+        #print "FETCHING CACHE", self._id
+        return self._cache[self._id]
+
 class XMLSerializable(object):
     __registry__ = {}
     def xmlNode(self, parent_node):
@@ -30,8 +41,11 @@ class XMLSerializable(object):
     @classmethod
     def loadNode(cls, node, id_cache=None):
         tagname = node.tag[len(NAMESPACE):]
-        if 'refID' in node.attrib and id_cache and node.attrib['refID'] in id_cache:
-            return id_cache[node.attrib['refID']]
+        if 'refID' in node.attrib:
+            if id_cache and node.attrib['refID'] in id_cache:
+                return id_cache[node.attrib['refID']]
+            elif isinstance(id_cache, dict):
+                return DelayedGetter(node.attrib['refID'], id_cache)
         elif tagname in cls.__registry__:
             return cls.__registry__[tagname].fromNode(node, id_cache)
         raise NotImplementedError("Deserialization not implemented for %r" % cls)
@@ -101,11 +115,14 @@ class HasPython(object):
             method_string = "    pass"
         return "class {0}(object):\n{1}".format(self.klass, method_string)
 
-class Command(object):
+class RefID(object):
     def refNode(self, parent):
         return xml.etree.ElementTree.SubElement(parent,
                                                 self.__class__.__name__, 
                                                 {'refID': self.id})
+
+class Command(RefID):
+    pass
 
 class UIControl(Command, XMLSerializable, HasPython):
     pass
@@ -171,7 +188,7 @@ class ControlContainer(XMLAttrMap):
         self.addItemsToNode(newnode)
 
 @XMLSerializable.registerType
-class Menu(ControlContainer):
+class Menu(ControlContainer, RefID):
     "Menu"
     __attr_map__ = {'caption': 'caption', 
                     'isRootMenu': 'top_level',
@@ -182,7 +199,7 @@ class Menu(ControlContainer):
     def __init__(self, caption='Menu', top_level=False, shortcut_menu=False, separator=False, category=None, id=None):
         super(Menu, self).__init__()
         self.caption = caption or ''
-        self.top_level = True #bool(top_level)
+        self.top_level = bool(top_level)
         self.shortcut_menu = bool(shortcut_menu)
         self.separator = bool(separator)
         self.category = category or ''
@@ -377,16 +394,21 @@ class PythonAddin(object):
         return rm_(self, target_item)
     @property
     def commands(self):
-        ids = set()
-        for container in [i for i in self if isinstance(i, ControlContainer)]:
-            for item in container.items:
-                if isinstance(item, Command):
-                    if item.id not in ids:
-                        ids.add(item.id)
-                        yield item
+        seen_ids = set()
+        for command in self:
+            if isinstance(command, UIControl) and command.id not in seen_ids:
+                yield command
+                seen_ids.add(command.id)
+    @property
+    def allmenus(self):
+        seen_ids = set()
+        for menu in self:
+            if isinstance(menu, Menu) and menu.id not in seen_ids:
+                yield menu
+                seen_ids.add(menu.id)
     @property
     def menus(self):
-        return [menu for menu in self.items if isinstance(menu, Menu)]
+        return [m for m in self.items if isinstance(m, Menu) and m.top_level]
     @property
     def toolbars(self):
         return [toolbar for toolbar in self.items if isinstance(toolbar, Toolbar)]
@@ -426,11 +448,19 @@ class PythonAddin(object):
             XMLSerializable.loadNode(command, id_cache)
         for tag in ("Extensions", "Toolbars", "Menus"):
             for item in app_node.find(NAMESPACE+tag).getchildren():
-                new_addin.items.append(XMLSerializable.loadNode(item, id_cache))
+                newobject = XMLSerializable.loadNode(item, id_cache)
+                new_addin.items.append(newobject)
+        def fix_references(addin_item, depth = 0):
+            if hasattr(addin_item, 'items'):
+                new_items = [i.item if isinstance(i, DelayedGetter)
+                             else i for i in addin_item.items]
+                addin_item.items = new_items
+                for item in new_items:
+                    fix_references(item, depth + 1)
+        fix_references(new_addin)
         return new_addin
     def backup(self):
         addin_file = os.path.join(self.projectpath, self.addinfile)
-        print "--backup--", addin_file
         if (self.backup_files and os.path.isfile(addin_file)
                 and os.stat(addin_file)[stat.ST_MTIME] > self.last_backup):
             path, ext = os.path.splitext(addin_file)
@@ -443,6 +473,14 @@ class PythonAddin(object):
             shutil.copyfile(addin_file, new_file)
         self.last_backup = time.time()
         return self.addinfile
+    def fixids(self, item = None):
+        target = self if item is None else item
+        if hasattr(target, 'id'):
+            if '.' not in target.id and '{' not in target.id:
+                target.id = self.namespace + "." + target.id
+        if hasattr(target, 'items'):
+            for subitem in target.items:
+                self.fixids(subitem)
     @property
     def xml(self):
         root = xml.etree.ElementTree.Element('ESRI.Configuration',
@@ -461,6 +499,9 @@ class PythonAddin(object):
         addinnode = xml.etree.ElementTree.SubElement(root, 'AddIn', {'language': 'PYTHON', 
                                                                      'library': self.addinfile,
                                                                      'namespace': self.namespace})
+
+        self.fixids()
+
         appnode = xml.etree.ElementTree.SubElement(addinnode, self.app)
         appnode.text = "\n    "
         commandnode = xml.etree.ElementTree.SubElement(appnode, 'Commands')
@@ -480,7 +521,7 @@ class PythonAddin(object):
         toolbarnode.tail = "\n    "
         menunode = xml.etree.ElementTree.SubElement(appnode, 'Menus')
         menunode.text = "\n        "
-        for menu in self.menus:
+        for menu in self.allmenus:
             menu.xmlNode(menunode)
         menunode.tail = "\n    "
         markup = xml.etree.ElementTree.tostring(root).encode("utf-8")
@@ -591,6 +632,13 @@ class PythonAddinProjectDirectory(object):
 if __name__ == "__main__":
     myaddin = PythonAddin("My Addin", "This is a new addin", "myaddin")
     toolbar = Toolbar()
+    top_menu = Menu("Top Level Menu", id="top_menu")
+    top_menu.items.append(Button("Top Menu button 1", id="tb1"))
+    top_menu.items.append(Button("Top Menu button 2", id="tb2"))
+    menu = Menu("Embedded Menu", id="embedded_menu")
+    menu.items.append(Button("Menu button", "MenuButton"))
     toolbar.items.append(Button("Hello there", "HelloButton"))
+    toolbar.items.append(menu)
     myaddin.items.append(toolbar)
+    myaddin.items.append(top_menu)
     print myaddin.xml

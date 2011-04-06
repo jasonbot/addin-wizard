@@ -499,6 +499,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                 msgdlg.Destroy()
                 del self.project.addin.warning
             self.save_button.Enable(False)
+            self.setupPropsDialog()
         except Exception as e:
             traceback.print_exc()
             print e

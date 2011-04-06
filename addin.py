@@ -157,8 +157,21 @@ class Extension(XMLAttrMap, HasPython):
                           ('spatialReferenceChanged', '', ['self']),
                           ('itemAdded', '', ['self', 'new_item']),
                           ('itemDeleted', '', ['self', 'deleted_item']),
-                          ('itemReordered', '', ['self', 'reordered_item', 'new_index'])
-                          ]
+                          ('itemReordered', '', ['self', 'reordered_item', 'new_index']),
+                          ('onEditorSelectionChanged', '', ['self']),
+                          ('onCurrentLayerChanged', '', ['self']),
+                          ('onCurrentTaskChanged', '', ['self']),
+                          ('onStartEditing', '', ['self']),
+                          ('onStopEditing', '', ['self']),
+                          ('onStartOperation', '', ['self']),
+                          ('beforeStopOperation', '', ['self']),
+                          ('onStopOperation', '', ['self']),
+                          ('onSaveEdits', '', ['self']),
+                          ('onChangeFeature', '', ['self']),
+                          ('onCreateFeature', '', ['self']),
+                          ('onDeleteFeature', '', ['self']),
+                          ('onUndo', '', ['self']),
+                          ('onRedo', '', ['self'])]
     @property
     def __init_code__(self):
         return ['# For performance considerations, please remove all unused methods in this class.',
@@ -171,7 +184,7 @@ class Extension(XMLAttrMap, HasPython):
         self.category = category or ''
         self.show_in_dialog = True
         self.enabled = True
-        self.enabled_methods = [m[0] for m in self.__python_methods__]
+        self.enabled_methods = [m[0] for m in self.__python_methods__[:7]]
     def xmlNode(self, parent):
         newnode = xml.etree.ElementTree.SubElement(parent, 
                                                    self.__class__.__name__)

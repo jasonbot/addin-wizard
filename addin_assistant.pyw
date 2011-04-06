@@ -327,7 +327,8 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                                 ('menu_style', 'Menu Style', bool, None),
                                 ('shortcut_menu', 'Is Shortcut Menu', bool, None),
                                 ('columns', 'Column Count', unicode, isinteger),
-                                ('image', 'Image for Control', wx.Bitmap, None)) 
+                                ('image', 'Image for Control', wx.Bitmap, None),
+                                ('enabled_methods', 'Methods to Implement', list, None)) 
                                     if hasattr(self._selected_data, p[0])]
         for prop, caption, datatype, validator in proplist:
             # This is all kind of hairy, sorry
@@ -434,6 +435,33 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                 choosefilebutton = wx.BitmapButton(self.item_property_panel, -1, bitmap)
                 self.Bind(wx.EVT_BUTTON, pickbitmap(self._selected_data, prop, choosefilebutton, self), choosefilebutton)
                 newsizer.Add(choosefilebutton, 1, wx.ALL|wx.EXPAND, 0)
+            elif datatype is list:
+                st = wx.StaticText(self.item_property_panel, -1, caption + ":", style=wx.ALIGN_RIGHT)
+                st.SetMinSize((175, 16))
+                newsizer.Add(st, 0, wx.ALL|wx.ALIGN_TOP, 2)
+
+                clb = wx.CheckListBox(self.item_property_panel, -1)
+                clb.Set([x[0] for x in self._selected_data.__python_methods__])
+                clb.SetCheckedStrings(self._selected_data.enabled_methods)
+                class Checker(object):
+                    def __init__(self, data, ctrl, app):
+                        self._data = data
+                        self._ctrl = ctrl
+                        self._app = app
+                    def __call__(self, event):
+                        index = event.GetSelection()
+                        method = self._ctrl.GetString(index)
+                        if self._ctrl.IsChecked(index):
+                            if method not in self._data.enabled_methods:
+                                self._data.enabled_methods.append(method)
+                        else:
+                            if method in self._data.enabled_methods:
+                                self._data.enabled_methods.pop(self._data.enabled_methods.index(method))
+                        self._app.save_button.Enable(True)
+                checker = Checker(self._selected_data, clb, self)
+                self.Bind(wx.EVT_CHECKLISTBOX, checker, clb)
+                newsizer.Add(clb, 1, wx.RIGHT|wx.EXPAND, 8)
+
             # WHO KNOWS!
             else:
                 newsizer.Add(wx.StaticText(self.item_property_panel, -1, caption + ": " + unicode(getattr(self._selected_data, prop))), 0, wx.EXPAND)

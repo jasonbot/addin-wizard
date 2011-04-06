@@ -42,7 +42,8 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
         self.save_button.Enable(True)
 
     def AddMenu(self, event):
-        menu = addin.Menu("Menu", self._selected_data is self._menutoplevel)
+        menu = addin.Menu("Menu", self._selected_data is self._menutoplevel,
+                          id=self.project.addin.namespace+'.menu')
         self.project.addin.items.append(menu)
         menuitem = self.contents_tree.AppendItem(self.menusroot, menu.caption)
         self.contents_tree.SetItemPyData(menuitem, menu)
@@ -50,7 +51,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
         self.save_button.Enable(True)
 
     def AddToolbar(self, event):
-        toolbar = addin.Toolbar()
+        toolbar = addin.Toolbar(id=self.project.addin.namespace+'.toolbar')
         self.project.addin.items.append(toolbar)
         toolbaritem = self.contents_tree.AppendItem(self.toolbarsroot, toolbar.caption)
         self.contents_tree.SetItemPyData(toolbaritem, toolbar)
@@ -60,7 +61,8 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
     @property
     def extensionmenu(self):
         extensionmenu = wx.Menu()
-        cmd = extensionmenu.Append(self._newextensionid, "New Extension")
+        cmd = extensionmenu.Append(self._newextensionid, "New Extension",
+                                   id=self.project.addin.namespace+'.extension')
         extensionmenu.Bind(wx.EVT_MENU, self.AddExtension, cmd)
         return extensionmenu
 
@@ -81,15 +83,16 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
     @property
     def controlcontainermenu(self):
         class ItemAppender(object):
-            def __init__(self, tree, selection, item, cls, save_button):
+            def __init__(self, tree, selection, item, cls, save_button, namespace):
                 self.tree = tree
                 self.selection = selection
                 self.item = item
                 self.cls = cls
                 self.save_button = save_button
+                self.namespace = namespace
             def __call__(self, event):
                 try:
-                    new_item = self.cls()
+                    new_item = self.cls(id=self.namespace+'.'+self.cls.__name__.lower())
                     self.item.items.append(new_item)
                     toolbaritem = self.tree.AppendItem(self.selection, getattr(new_item, 'caption', unicode(new_item)))
                     self.tree.SetItemPyData(toolbaritem, new_item)
@@ -106,25 +109,25 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
         controlcontainermenu = wx.Menu()
         if not isinstance(item, addin.ToolPalette):
             buttoncmd = controlcontainermenu.Append(-1, "New Button")
-            controlcontainermenu.Bind(wx.EVT_MENU, ItemAppender(tree, selection, item, addin.Button, self.save_button), buttoncmd)
+            controlcontainermenu.Bind(wx.EVT_MENU, ItemAppender(tree, selection, item, addin.Button, self.save_button, self.project.addin.namespace), buttoncmd)
             menucmd = controlcontainermenu.Append(-1, "New Menu")
-            controlcontainermenu.Bind(wx.EVT_MENU, ItemAppender(tree, selection, item, addin.Menu, self.save_button), menucmd)
+            controlcontainermenu.Bind(wx.EVT_MENU, ItemAppender(tree, selection, item, addin.Menu, self.save_button, self.project.addin.namespace), menucmd)
         if isinstance(item, addin.Menu):
             pass
             #multiitemcmd = controlcontainermenu.Append(-1, "New MultiItem")
             #controlcontainermenu.Bind(wx.EVT_MENU, 
             #                          ItemAppender(tree, selection, item, 
-            #                                       addin.MultiItem, self.save_button), 
+            #                                       addin.MultiItem, self.save_button, self.project.addin.namespace), 
             #                                       multiitemcmd)
         else:
             toolcmd = controlcontainermenu.Append(-1, "New Tool")
-            controlcontainermenu.Bind(wx.EVT_MENU, ItemAppender(tree, selection, item, addin.Tool, self.save_button), toolcmd)
+            controlcontainermenu.Bind(wx.EVT_MENU, ItemAppender(tree, selection, item, addin.Tool, self.save_button, self.project.addin.namespace), toolcmd)
         if not isinstance(item, (addin.ToolPalette, addin.Menu)):
             palettecmd = controlcontainermenu.Append(-1, "New Tool Palette")
-            controlcontainermenu.Bind(wx.EVT_MENU, ItemAppender(tree, selection, item, addin.ToolPalette, self.save_button), palettecmd)
+            controlcontainermenu.Bind(wx.EVT_MENU, ItemAppender(tree, selection, item, addin.ToolPalette, self.save_button, self.project.addin.namespace), palettecmd)
         if isinstance(item, addin.Toolbar):
             comboboxcmd = controlcontainermenu.Append(-1, "New Combo Box")
-            controlcontainermenu.Bind(wx.EVT_MENU, ItemAppender(tree, selection, item, addin.ComboBox, self.save_button), comboboxcmd)
+            controlcontainermenu.Bind(wx.EVT_MENU, ItemAppender(tree, selection, item, addin.ComboBox, self.save_button, self.project.addin.namespace), comboboxcmd)
         return controlcontainermenu
 
     def loadTreeView(self):

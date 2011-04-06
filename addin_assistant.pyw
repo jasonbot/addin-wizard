@@ -321,14 +321,14 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                                 ('hint_text', 'Hint Text', unicode, None),
                                 ('help_heading', 'Help Heading', unicode, None),
                                 ('help_string', 'Help Content', unicode, None),
+                                ('enabled_methods', 'Methods to Implement', list, None),
                                 ('separator', 'Has Separator', bool, None),
                                 ('show_initially', 'Show Initially', bool, None),
                                 ('enabled', 'Load Automatically', bool, None),
                                 ('menu_style', 'Menu Style', bool, None),
                                 ('shortcut_menu', 'Is Shortcut Menu', bool, None),
                                 ('columns', 'Column Count', unicode, isinteger),
-                                ('image', 'Image for Control', wx.Bitmap, None),
-                                ('enabled_methods', 'Methods to Implement', list, None)) 
+                                ('image', 'Image for Control', wx.Bitmap, None)) 
                                     if hasattr(self._selected_data, p[0])]
         for prop, caption, datatype, validator in proplist:
             # This is all kind of hairy, sorry
@@ -465,7 +465,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
             # WHO KNOWS!
             else:
                 newsizer.Add(wx.StaticText(self.item_property_panel, -1, caption + ": " + unicode(getattr(self._selected_data, prop))), 0, wx.EXPAND)
-            sizer.Add(newsizer, 0, wx.EXPAND|wx.BOTTOM, 2)
+            sizer.Add(newsizer, 0, wx.EXPAND|wx.BOTTOM, 8)
         sizer.Layout()
         self.Refresh()
 

@@ -61,8 +61,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
     @property
     def extensionmenu(self):
         extensionmenu = wx.Menu()
-        cmd = extensionmenu.Append(self._newextensionid, "New Extension",
-                                   id=self.project.addin.namespace+'.extension')
+        cmd = extensionmenu.Append(self._newextensionid, "New Extension")
         extensionmenu.Bind(wx.EVT_MENU, self.AddExtension, cmd)
         return extensionmenu
 

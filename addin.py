@@ -27,10 +27,8 @@ class DelayedGetter(object):
     def __init__(self, id_to_get, id_cache):
         self._id = id_to_get
         self._cache = id_cache
-        #print "NEW GETTER", id_to_get
     @property
     def item(self):
-        #print "FETCHING CACHE", self._id
         return self._cache[self._id]
 
 class XMLSerializable(object):
@@ -97,6 +95,8 @@ class HasPython(object):
     @property
     def python(self):
         methods = getattr(self, '__python_methods__', [])
+        if hasattr(self, 'enabled_methods'):
+            methods = [m for m in methods if m[0] in self.enabled_methods]
         method_string = "\n".join(
             "    def {0}({1}):\n{2}        pass".format(method, 
                                                         ", ".join(args),
@@ -113,7 +113,13 @@ class HasPython(object):
                     method_string)
         if not method_string:
             method_string = "    pass"
-        return "class {0}(object):\n{1}".format(self.klass, method_string)
+        comment_or_doc = '    # {0}'.format(self.__class__.__name__)
+        if hasattr(self, 'id'):
+            comment_or_doc = '    """Implementation for {0} ({1})"""'.format(self.id, 
+                                                                             self.__class__.__name__)
+        else:
+            print "NO ID", dir(self)
+        return "class {0}(object):\n{1}\n{2}".format(self.klass, comment_or_doc, method_string)
 
 class RefID(object):
     def refNode(self, parent):
@@ -165,6 +171,7 @@ class Extension(XMLAttrMap, HasPython):
         self.category = category or ''
         self.show_in_dialog = True
         self.enabled = True
+        self.enabled_methods = [m[0] for m in self.__python_methods__]
     def xmlNode(self, parent):
         newnode = xml.etree.ElementTree.SubElement(parent, 
                                                    self.__class__.__name__)

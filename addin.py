@@ -469,18 +469,36 @@ class PythonAddin(object):
             while os.path.exists(new_file):
                 new_index += 1
                 new_file = path + "_" + str(new_index) + ext
-            self.warning = u"Python script {0} already exists. Saving a backup as {1}.".format(addin_file, new_file)
+            if not hasattr(self, 'warning'):
+                self.warning = u''
+            else:
+                self.warning += "\n"
+            self.warning += u"Python script {0} already exists. Saving a backup as {1}.".format(addin_file, new_file)
             shutil.copyfile(addin_file, new_file)
         self.last_backup = time.time()
         return self.addinfile
-    def fixids(self, item = None):
+    def fixids(self, item = None, seen_ids = None):
+        if seen_ids is None:
+            seen_ids = {}
         target = self if item is None else item
         if hasattr(target, 'id'):
             if '.' not in target.id and '{' not in target.id:
                 target.id = self.namespace + "." + target.id
+            if target.id in seen_ids and seen_ids[target.id] != target:
+                if not hasattr(self, 'warning'):
+                    self.warning = ''
+                else:
+                    self.warning += "\n"
+                idnum = 1
+                while (target.id + "_" + str(idnum)) in seen_ids:
+                    idnum += 1
+                newid = target.id + "_" + str(idnum)
+                self.warning += u"ID {0} is already in use. Renaming next usage to {1}.".format(target.id, newid)
+                target.id = newid
+            seen_ids[target.id] = target
         if hasattr(target, 'items'):
             for subitem in target.items:
-                self.fixids(subitem)
+                self.fixids(subitem, seen_ids)
     @property
     def xml(self):
         root = xml.etree.ElementTree.Element('ESRI.Configuration',

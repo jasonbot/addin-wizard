@@ -435,6 +435,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                 choosefilebutton = wx.BitmapButton(self.item_property_panel, -1, bitmap)
                 self.Bind(wx.EVT_BUTTON, pickbitmap(self._selected_data, prop, choosefilebutton, self), choosefilebutton)
                 newsizer.Add(choosefilebutton, 1, wx.ALL|wx.EXPAND, 0)
+            # Check list for enabled methods
             elif datatype is list:
                 st = wx.StaticText(self.item_property_panel, -1, caption + ":", style=wx.ALIGN_RIGHT)
                 st.SetMinSize((175, 16))

@@ -184,7 +184,7 @@ class Extension(XMLAttrMap, HasPython):
         self.category = category or ''
         self.show_in_dialog = True
         self.enabled = True
-        self.enabled_methods = [m[0] for m in self.__python_methods__]
+        self.enabled_methods = [] #[m[0] for m in self.__python_methods__]
     def xmlNode(self, parent):
         newnode = xml.etree.ElementTree.SubElement(parent, 
                                                    self.__class__.__name__)

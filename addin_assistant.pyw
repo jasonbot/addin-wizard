@@ -311,26 +311,35 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                 return False
         def nonemptystring(val):
             return bool((val or '').strip())
-        proplist = [p for p in (('name', 'Name', unicode, nonemptystring), 
-                                ('caption', 'Caption', unicode, nonemptystring), 
-                                ('klass', 'Class Name', unicode, pythonliteral), 
-                                ('id', 'ID (Variable Name)', unicode, namespacedpythonliteral),
-                                ('description', 'Description', unicode, None),
-                                ('tip', 'Tooltip', unicode, None),
-                                ('message', 'Message', unicode, None),
-                                ('hint_text', 'Hint Text', unicode, None),
-                                ('help_heading', 'Help Heading', unicode, None),
-                                ('help_string', 'Help Content', unicode, None),
-                                ('enabled_methods', 'Methods to Implement', list, None),
-                                ('separator', 'Has Separator', bool, None),
-                                ('show_initially', 'Show Initially', bool, None),
-                                ('enabled', 'Load Automatically', bool, None),
-                                ('menu_style', 'Menu Style', bool, None),
-                                ('shortcut_menu', 'Is Shortcut Menu', bool, None),
-                                ('columns', 'Column Count', unicode, isinteger),
-                                ('image', 'Image for Control', wx.Bitmap, None)) 
+        class Namespacer(object):
+            def __init__(self, project, control):
+                self.project = project
+                self.control = control
+            def __call__(self, event):
+                oldlabel = self.control.GetLabel()
+                if '.' not in oldlabel:
+                    newlabel = self.project.addin.namespace + '.' + oldlabel
+                    self.control.SetLabel(newlabel)
+        proplist = [p for p in (('name', 'Name', unicode, nonemptystring, None), 
+                                ('caption', 'Caption', unicode, nonemptystring, None), 
+                                ('klass', 'Class Name', unicode, pythonliteral, None), 
+                                ('id', 'ID (Variable Name)', unicode, namespacedpythonliteral, Namespacer),
+                                ('description', 'Description', unicode, None, None),
+                                ('tip', 'Tooltip', unicode, None, None),
+                                ('message', 'Message', unicode, None, None),
+                                ('hint_text', 'Hint Text', unicode, None, None),
+                                ('help_heading', 'Help Heading', unicode, None, None),
+                                ('help_string', 'Help Content', unicode, None, None),
+                                ('enabled_methods', 'Methods to Implement', list, None, None),
+                                ('separator', 'Has Separator', bool, None, None),
+                                ('show_initially', 'Show Initially', bool, None, None),
+                                ('enabled', 'Load Automatically', bool, None, None),
+                                ('menu_style', 'Menu Style', bool, None, None),
+                                ('shortcut_menu', 'Is Shortcut Menu', bool, None, None),
+                                ('columns', 'Column Count', unicode, isinteger, None),
+                                ('image', 'Image for Control', wx.Bitmap, None, None)) 
                                     if hasattr(self._selected_data, p[0])]
-        for prop, caption, datatype, validator in proplist:
+        for prop, caption, datatype, validator, fixer in proplist:
             # This is all kind of hairy, sorry
             newsizer = wx.BoxSizer(wx.HORIZONTAL)
             # Text entry
@@ -357,9 +366,9 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                                 traceback.print_exc()
                                 print e
                             self.app.contents_tree.SetItemText(self.app.contents_tree.GetSelection(), 
-                                                               getattr(self.edit_object, 'caption', 
+                                                               unicode(getattr(self.edit_object, 'caption', 
                                                                    getattr(self.edit_object, 'name', 
-                                                                       unicode(self.edit_object))))
+                                                                       unicode(self.edit_object)))))
                             self.app.save_button.Enable(True)
                             self.command.SetBackgroundColour('White')
                             self.app.Refresh()
@@ -368,6 +377,10 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                             self.app.Refresh()
                         event.Skip()
                 self.Bind(wx.EVT_TEXT, edittext(self._selected_data, text, self, prop, validator, datatype), text)
+                if fixer:
+                    newfixer = fixer(self.project, text)
+                    text.Bind(wx.EVT_SET_FOCUS, newfixer)
+                    text.Bind(wx.EVT_KILL_FOCUS, newfixer)
                 newsizer.Add(text, 1, wx.RIGHT, 8)
             # Checkbox
             elif datatype is bool:

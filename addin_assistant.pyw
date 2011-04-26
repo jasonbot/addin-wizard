@@ -6,6 +6,8 @@ import sys
 import traceback
 import wx
 
+from i18n import _
+
 class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
     # Sentinel/singletons for the treeview
     class _extensiontoplevel(object):
@@ -61,21 +63,21 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
     @property
     def extensionmenu(self):
         extensionmenu = wx.Menu()
-        cmd = extensionmenu.Append(self._newextensionid, "New Extension")
+        cmd = extensionmenu.Append(self._newextensionid, _("New Extension"))
         extensionmenu.Bind(wx.EVT_MENU, self.AddExtension, cmd)
         return extensionmenu
 
     @property
     def menumenu(self):
         menumenu = wx.Menu()
-        cmd = menumenu.Append(self._newmenuid, "New Menu")
+        cmd = menumenu.Append(self._newmenuid, _("New Menu"))
         menumenu.Bind(wx.EVT_MENU, self.AddMenu, cmd)
         return menumenu
 
     @property
     def toolbarmenu(self):
         toolbarmenu = wx.Menu()
-        cmd = toolbarmenu.Append(self._newtoolbarid, "New Toolbar")
+        cmd = toolbarmenu.Append(self._newtoolbarid, _("New Toolbar"))
         toolbarmenu.Bind(wx.EVT_MENU, self.AddToolbar, cmd)
         return toolbarmenu
 
@@ -107,9 +109,9 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
 
         controlcontainermenu = wx.Menu()
         if not isinstance(item, addin.ToolPalette):
-            buttoncmd = controlcontainermenu.Append(-1, "New Button")
+            buttoncmd = controlcontainermenu.Append(-1, _("New Button"))
             controlcontainermenu.Bind(wx.EVT_MENU, ItemAppender(tree, selection, item, addin.Button, self.save_button, self.project.addin.namespace), buttoncmd)
-            menucmd = controlcontainermenu.Append(-1, "New Menu")
+            menucmd = controlcontainermenu.Append(-1, _("New Menu"))
             controlcontainermenu.Bind(wx.EVT_MENU, ItemAppender(tree, selection, item, addin.Menu, self.save_button, self.project.addin.namespace), menucmd)
         if isinstance(item, addin.Menu):
             pass
@@ -119,13 +121,13 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
             #                                       addin.MultiItem, self.save_button, self.project.addin.namespace), 
             #                                       multiitemcmd)
         else:
-            toolcmd = controlcontainermenu.Append(-1, "New Tool")
+            toolcmd = controlcontainermenu.Append(-1, _("New Tool"))
             controlcontainermenu.Bind(wx.EVT_MENU, ItemAppender(tree, selection, item, addin.Tool, self.save_button, self.project.addin.namespace), toolcmd)
         if not isinstance(item, (addin.ToolPalette, addin.Menu)):
-            palettecmd = controlcontainermenu.Append(-1, "New Tool Palette")
+            palettecmd = controlcontainermenu.Append(-1, _("New Tool Palette"))
             controlcontainermenu.Bind(wx.EVT_MENU, ItemAppender(tree, selection, item, addin.ToolPalette, self.save_button, self.project.addin.namespace), palettecmd)
         if isinstance(item, addin.Toolbar):
-            comboboxcmd = controlcontainermenu.Append(-1, "New Combo Box")
+            comboboxcmd = controlcontainermenu.Append(-1, _("New Combo Box"))
             controlcontainermenu.Bind(wx.EVT_MENU, ItemAppender(tree, selection, item, addin.ComboBox, self.save_button, self.project.addin.namespace), comboboxcmd)
         return controlcontainermenu
 
@@ -146,19 +148,19 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
         self.contents_tree.DeleteAllItems()
         self.treeroot = self.contents_tree.AddRoot("Root")
         self.extensionsroot = self.contents_tree.AppendItem(self.treeroot,
-                                                            "EXTENSIONS")
+                                                            _("EXTENSIONS"))
         self.contents_tree.SetItemPyData(self.extensionsroot,
                                          self._extensiontoplevel)
         for item in self.project.addin.extensions:
             populate(self.extensionsroot, item)
         self.menusroot = self.contents_tree.AppendItem(self.treeroot,
-                                                       "MENUS")
+                                                       _("MENUS"))
         self.contents_tree.SetItemPyData(self.menusroot,
                                          self._menutoplevel)
         for item in self.project.addin.menus:
             populate(self.menusroot, item)
         self.toolbarsroot = self.contents_tree.AppendItem(self.treeroot,
-                                                          "TOOLBARS")
+                                                          _("TOOLBARS"))
         self.contents_tree.SetItemPyData(self.toolbarsroot,
                                          self._toolbartoplevel)
         for item in self.project.addin.toolbars:
@@ -170,7 +172,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
     def loadProject(self):
         if getattr(self.project, 'warning', None):
             msgdlg = wx.MessageDialog(self, unicode(self.project.warning),
-                                            'Project Information', 
+                                            _("Project Information"), 
                                             wx.OK | wx.ICON_INFORMATION)
             msgdlg.ShowModal()
             msgdlg.Destroy()
@@ -189,8 +191,8 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
 
     def OnClose(self, event):
         if self.save_button.IsEnabled():
-            confirmdlg = wx.MessageDialog(self, "Save your changes before exiting?", 
-                                                'Save before exiting?', 
+            confirmdlg = wx.MessageDialog(self, _("Save your changes before exiting?"), 
+                                                _("Save before exiting?"), 
                                                 wx.YES_NO | wx.ICON_QUESTION)
             res = confirmdlg.ShowModal()
             confirmdlg.Destroy()
@@ -222,7 +224,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
             pass
     def SelectFolder(self, event):
         import traceback
-        dlg = wx.DirDialog(self, "Choose a directory to use as an Add-In project root:", 
+        dlg = wx.DirDialog(self, _("Choose a directory to use as an Add-In project root:"), 
                            style=wx.DD_DEFAULT_STYLE)
         dlg.SetPath(self.lastPath)
         if dlg.ShowModal() == wx.ID_OK:
@@ -234,7 +236,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                 traceback.print_exc()
                 print repr(e.message)
                 errdlg = wx.MessageDialog(self, e.message,
-                                                'Error initializing Add-In', 
+                                                _("Error initializing Add-In"), 
                                                 wx.OK | wx.ICON_ERROR)
                 errdlg.ShowModal()
                 errdlg.Destroy()
@@ -320,24 +322,24 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                 if '.' not in oldlabel:
                     newlabel = self.project.addin.namespace + '.' + oldlabel
                     self.control.SetLabel(newlabel)
-        proplist = [p for p in (('name', 'Name', unicode, nonemptystring, None), 
-                                ('caption', 'Caption', unicode, nonemptystring, None), 
-                                ('klass', 'Class Name', unicode, pythonliteral, None), 
-                                ('id', 'ID (Variable Name)', unicode, namespacedpythonliteral, Namespacer),
-                                ('description', 'Description', unicode, None, None),
-                                ('tip', 'Tooltip', unicode, None, None),
-                                ('message', 'Message', unicode, None, None),
-                                ('hint_text', 'Hint Text', unicode, None, None),
-                                ('help_heading', 'Help Heading', unicode, None, None),
-                                ('help_string', 'Help Content', unicode, None, None),
-                                ('enabled_methods', 'Methods to Implement', list, None, None),
-                                ('separator', 'Has Separator', bool, None, None),
-                                ('show_initially', 'Show Initially', bool, None, None),
-                                ('enabled', 'Load Automatically', bool, None, None),
-                                ('menu_style', 'Menu Style', bool, None, None),
-                                ('shortcut_menu', 'Is Shortcut Menu', bool, None, None),
-                                ('columns', 'Column Count', unicode, isinteger, None),
-                                ('image', 'Image for Control', wx.Bitmap, None, None)) 
+        proplist = [p for p in (('name', _("Name"), unicode, nonemptystring, None), 
+                                ('caption', _("Caption"), unicode, nonemptystring, None), 
+                                ('klass', _("Class Name"), unicode, pythonliteral, None), 
+                                ('id', _("ID (Variable Name)"), unicode, namespacedpythonliteral, Namespacer),
+                                ('description', _("Description"), unicode, None, None),
+                                ('tip', _("Tooltip"), unicode, None, None),
+                                ('message', _("Message"), unicode, None, None),
+                                ('hint_text', _("Hint Text"), unicode, None, None),
+                                ('help_heading', _("Help Heading"), unicode, None, None),
+                                ('help_string', _("Help Content"), unicode, None, None),
+                                ('enabled_methods', _("Methods to Implement"), list, None, None),
+                                ('separator', _("Has Separator"), bool, None, None),
+                                ('show_initially', _("Show Initially"), bool, None, None),
+                                ('enabled', _("Load Automatically"), bool, None, None),
+                                ('menu_style', _("Menu Style"), bool, None, None),
+                                ('shortcut_menu', _("Is Shortcut Menu"), bool, None, None),
+                                ('columns', _("Column Count"), unicode, isinteger, None),
+                                ('image', _("Image for Control"), wx.Bitmap, None, None)) 
                                     if hasattr(self._selected_data, p[0])]
         for prop, caption, datatype, validator, fixer in proplist:
             # This is all kind of hairy, sorry
@@ -415,12 +417,12 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                                             if os.path.exists(images_path)
                                             else self.app.path)
                         dlg = wx.FileDialog(
-                            self.app, message="Choose an image file for control",
+                            self.app, message=_("Choose an image file for control"),
                             defaultDir=default_path, 
                             defaultFile="",
-                            wildcard="PNG images (*.png)|*.png|"
-                                     "GIF images (*.gif)|*.gif|"
-                                     "BMP images (*.bmp)|*.bmp",
+                            wildcard=(_("PNG images (*.png)")+'|*.png|'+
+                                      _("GIF images (*.gif)")+'|*.gif|'+
+                                      _("BMP images (*.bmp)")+'|*.bmp'),
                             style=wx.OPEN)
                         if dlg.ShowModal() == wx.ID_OK:
                             image_file = dlg.GetPath()
@@ -432,7 +434,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                             self.app.Layout()
                             self.app.Refresh()
 
-                st = wx.StaticText(self.item_property_panel, -1, "Image for control:", style=wx.ALIGN_RIGHT)
+                st = wx.StaticText(self.item_property_panel, -1, _("Image for control:"), style=wx.ALIGN_RIGHT)
                 st.SetMinSize((175, 16))
                 newsizer.Add(st, 0, wx.ALL|wx.ALIGN_TOP, 2)
                 if getattr(self._selected_data, prop, ''):
@@ -498,15 +500,15 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
 
     def SelectProjectImage(self, event):
         dlg = wx.FileDialog(
-            self, message="Choose an image file",
+            self, message=_("Choose an image file"),
             defaultDir=(os.path.join(self.path, 
                                      os.path.dirname(self.project.addin.image))
                             if self.project.addin.image
                                 else self.path), 
             defaultFile="",
-            wildcard="PNG images (*.png)|*.png|"
-                     "GIF images (*.gif)|*.gif|"
-                     "BMP images (*.bmp)|*.bmp",
+            wildcard=(_("PNG images (*.png)")+u'|*.png|'+
+                      _("GIF images (*.gif)")+u'|*.gif|'+
+                      _("BMP images (*.bmp)")+u'|*.bmp'),
             style=wx.OPEN)
         if dlg.ShowModal() == wx.ID_OK:
             image_file = dlg.GetPath()
@@ -534,7 +536,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
             self.project.save()
             if getattr(self.project.addin, 'warning', None):
                 msgdlg = wx.MessageDialog(self, unicode(self.project.addin.warning),
-                                                'Project Information', 
+                                                _("Project Information"), 
                                                 wx.OK | wx.ICON_INFORMATION)
                 msgdlg.ShowModal()
                 msgdlg.Destroy()
@@ -572,7 +574,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
             if sd not in (self._extensiontoplevel, self._menutoplevel, self._toolbartoplevel):
                 if menu.GetMenuItemCount():
                     menu.AppendSeparator()
-                removecmd = menu.Append(-1, "Remove")
+                removecmd = menu.Append(-1, _("Remove"))
                 def remove(event):
                     if self.project.addin.remove(sd):
                         self.contents_tree.Delete(self.contents_tree.GetSelection())
@@ -584,7 +586,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
 if __name__ == "__main__":
     app = wx.PySimpleApp(0)
     wx.InitAllImageHandlers()
-    addin_window = AddinMakerAppWindow(None, -1, "")
+    addin_window = AddinMakerAppWindow(None, -1)
     app.SetTopWindow(addin_window)
     addin_window.Show()
     app.MainLoop()

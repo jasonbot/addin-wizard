@@ -300,7 +300,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
         sizer = self.item_property_panel.GetSizer()
         sizer.Clear(True)
         if hasattr(self._selected_data, '__doc__') and self._selected_data.__doc__:
-            st = wx.StaticText(self.item_property_panel, -1, unicode(self._selected_data.__doc__))
+            st = wx.StaticText(self.item_property_panel, -1, _(self._selected_data.__doc__))
             st.SetFont(wx.Font(16, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
             sizer.Add(st, 0, wx.ALL, 8)
         pythonliteral = re.compile("^[_A-Za-z][_A-Za-z0-9]*$").match

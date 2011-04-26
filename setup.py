@@ -6,5 +6,6 @@ setup(windows=[{'script': 'addin_assistant.pyw', 'icon_resources': [(1, "images\
       options={ "py2exe": { "dll_excludes": ["MSVCP90.dll"] }},
       data_files=[('images', glob.glob("images\\*.png") + 
                              glob.glob("images\\*.ico")),
-                  ('packaging', glob.glob("packaging\\*.*"))]
+                  ('packaging', glob.glob("packaging\\*.*")),
+                  ('resources', glob.glbo("resources\\*.*"))]
       )

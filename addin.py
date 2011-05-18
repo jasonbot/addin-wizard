@@ -226,7 +226,7 @@ class Menu(ControlContainer, RefID):
         self.id = id or makeid("menuitem")
 
 @XMLSerializable.registerType
-class ToolPalette(ControlContainer, Command):
+class ToolPalette(ControlContainer, UIControl):
     "Tool Palette"
     __attr_map__ = {'columns': 'columns',
                     'canTearOff': 'tearoff',
@@ -678,8 +678,12 @@ if __name__ == "__main__":
     top_menu.items.append(Button("Top Menu button 2", id="tb2"))
     menu = Menu("Embedded Menu", id="embedded_menu")
     menu.items.append(Button("Menu button", "MenuButton"))
+    palette = ToolPalette("Awesome Palette")
+    palette.items.append(Tool("New Fun Tool", "NewFunTool"))
+    palette.items.append(Tool("New Not Fun Tool", "NewNotFunTool"))
     toolbar.items.append(Button("Hello there", "HelloButton"))
     toolbar.items.append(menu)
+    toolbar.items.append(palette)
     myaddin.items.append(toolbar)
     myaddin.items.append(top_menu)
     print myaddin.xml

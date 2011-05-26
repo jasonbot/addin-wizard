@@ -162,7 +162,7 @@ class Extension(XMLAttrMap, HasPython):
                           ('onCurrentLayerChanged', '', ['self']),
                           ('onCurrentTaskChanged', '', ['self']),
                           ('onStartEditing', '', ['self']),
-                          ('onStopEditing', '', ['self']),
+                          ('onStopEditing', '', ['self', 'save_changes']),
                           ('onStartOperation', '', ['self']),
                           ('beforeStopOperation', '', ['self']),
                           ('onStopOperation', '', ['self']),

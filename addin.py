@@ -501,21 +501,24 @@ class PythonAddin(object):
         if seen_ids is None:
             seen_ids = {}
         target = self if item is None else item
-        if hasattr(target, 'id'):
-            if '.' not in target.id and '{' not in target.id:
-                target.id = self.namespace + "." + target.id
-            if target.id in seen_ids and seen_ids[target.id] != target:
-                if not hasattr(self, 'warning'):
-                    self.warning = ''
-                else:
-                    self.warning += "\n"
-                idnum = 1
-                while (target.id + "_" + str(idnum)) in seen_ids:
-                    idnum += 1
-                newid = target.id + "_" + str(idnum)
-                self.warning += u"ID {0} is already in use. Renaming next usage to {1}.".format(target.id, newid)
-                target.id = newid
-            seen_ids[target.id] = target
+        for thisattr in ('id', 'klass'):
+            if hasattr(target, thisattr):
+                if thisattr == 'id' and '.' not in getattr(target, thisattr) and '{' not in getattr(target, thisattr):
+                    target.thisattr = self.namespace + "." + target.thisattr
+                if getattr(target, thisattr) in seen_ids and seen_ids[getattr(target, thisattr)] != target:
+                    if not hasattr(self, 'warning'):
+                        self.warning = ''
+                    else:
+                        self.warning += "\n"
+                    thisattrnum = 1
+                    while (getattr(target, thisattr) + "_" + str(thisattrnum)) in seen_ids:
+                        thisattrnum += 1
+                    newthisattr = getattr(target, thisattr) + "_" + str(thisattrnum)
+                    self.warning += u"{0} {1} is already in use. Renaming next usage to {2}.".format("Class" if thisattr == "klass" else "ID",
+                                                                                                     getattr(target, thisattr),
+                                                                                                     newthisattr)
+                    setattr(target, thisattr, newthisattr)
+                seen_ids[getattr(target, thisattr)] = target
         if hasattr(target, 'items'):
             for subitem in target.items:
                 self.fixids(subitem, seen_ids)

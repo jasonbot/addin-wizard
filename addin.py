@@ -312,7 +312,8 @@ class ComboBox(Button):
     __python_methods__ = [('onSelChange',  '', ['self', 'selection']),
                           ('onEditChange', '', ['self', 'text']),
                           ('onFocus', '', ['self', 'focused']),
-                          ('onEnter', '', ['self'])
+                          ('onEnter', '', ['self']),
+                          ('refresh', '', ['self'])
                          ]
     def __init__(self, klass=None, id=None, category=None, caption=None):
         self.klass = klass or makeid("ComboBoxClass")

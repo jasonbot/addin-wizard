@@ -299,14 +299,12 @@ class ComboBox(Button):
                     'message': 'message',
                     'sizeString': 'size_string',
                     'itemSizeString': 'item_size_string',
-                    'hintText': 'hint_text',
                     'rows': 'rows'}
     @property
     def __init_code__(self):
         return ['self.items = ["item1", "item2"]',
                 'self.editable = %r' % self.editable,
                 'self.enabled = True',
-                'self.hintText = %r' % self.hint_text,
                 'self.dropdownWidth = %r' % self.item_size_string,
                 'self.width = %r' % self.size_string]
     __python_methods__ = [('onSelChange',  '', ['self', 'selection']),

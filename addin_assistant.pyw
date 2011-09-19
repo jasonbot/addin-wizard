@@ -341,7 +341,6 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                                 ('columns', _("Column Count"), unicode, isinteger, None),
                                 ('image', _("Image for Control"), wx.Bitmap, None, None)) 
                                     if hasattr(self._selected_data, p[0])]
-        lastcontrol = None
         for prop, caption, datatype, validator, fixer in proplist:
             # This is all kind of hairy, sorry
             newsizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -352,7 +351,6 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                 newsizer.Add(st, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 2)
                 text = wx.TextCtrl(self.item_property_panel, -1, unicode(getattr(self._selected_data, prop, '')) or '')
                 text.SetBackgroundColour('White')
-                lastcontrol = text
                 class edittext(object):
                     def __init__(self, edit_object, command, app, propname, validator, datatype):
                         self.edit_object = edit_object
@@ -399,7 +397,6 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                         self.app.save_button.Enable(True)
                 boolcheck = wx.CheckBox(self.item_property_panel, -1, caption)
                 boolcheck.SetValue(getattr(self._selected_data, prop))
-                lastcontrol = boolcheck
                 self.Bind(wx.EVT_CHECKBOX, toggle(self._selected_data, prop, boolcheck, self), boolcheck)
                 newsizer.Add(boolcheck, 1, wx.LEFT, 178)
             # Image selection
@@ -451,7 +448,6 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                             for yc in xrange(bitmap.GetHeight()):
                                 bitmap.SetAlpha(xc, yc, 255)
                 choosefilebutton = wx.BitmapButton(self.item_property_panel, -1, bitmap)
-                lastcontrol = choosefilebutton
                 self.Bind(wx.EVT_BUTTON, pickbitmap(self._selected_data, prop, choosefilebutton, self), choosefilebutton)
                 newsizer.Add(choosefilebutton, 1, wx.ALL|wx.EXPAND, 0)
             # Check list for enabled methods
@@ -479,7 +475,6 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
                                 self._data.enabled_methods.pop(self._data.enabled_methods.index(method))
                         self._app.save_button.Enable(True)
                 checker = Checker(self._selected_data, clb, self)
-                lastcontrol = checker
                 self.Bind(wx.EVT_CHECKLISTBOX, checker, clb)
                 newsizer.Add(clb, 1, wx.RIGHT|wx.EXPAND, 8)
 
@@ -487,9 +482,6 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
             else:
                 newsizer.Add(wx.StaticText(self.item_property_panel, -1, caption + ": " + unicode(getattr(self._selected_data, prop))), 0, wx.EXPAND)
             sizer.Add(newsizer, 0, wx.EXPAND|wx.BOTTOM, 8)
-        #if lastcontrol:
-        #    self.save_button.MoveAfterInTabOrder(lastcontrol)
-        #    self.open_folder.MoveAfterInTabOrder(self.save_button)
         sizer.Layout()
         self.Refresh()
 

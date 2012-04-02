@@ -503,7 +503,7 @@ class PythonAddin(object):
         for thisattr in ('id', 'klass'):
             if hasattr(target, thisattr):
                 if thisattr == 'id' and '.' not in getattr(target, thisattr) and '{' not in getattr(target, thisattr):
-                    target.thisattr = self.namespace + "." + target.thisattr
+                    target.thisattr = self.namespace + "." + getattr(target, thisattr, thisattr)
                 if getattr(target, thisattr) in seen_ids and seen_ids[getattr(target, thisattr)] != target:
                     if not hasattr(self, 'warning'):
                         self.warning = ''

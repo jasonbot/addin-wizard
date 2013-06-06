@@ -601,7 +601,6 @@ class PythonAddinProjectDirectory(object):
                 self.warning = getattr(self.addin, 'warning', None)
         else:
             # Fix for NIM092018
-            ##addin_name = ''.join(x for x in os.path.basename(path) if x.isalpha())
             addin_name = os.path.basename(path)
             self.addin = PythonAddin("Python Addin", "New Addin", (addin_name if addin_name else 'python') + "_addin",
                                      backup_files = True)

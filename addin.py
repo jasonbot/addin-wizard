@@ -1,3 +1,4 @@
+import imp
 import datetime
 import itertools
 import random
@@ -34,7 +35,7 @@ class DelayedGetter(object):
 class XMLSerializable(object):
     __registry__ = {}
     def xmlNode(self, parent_node):
-        raise NotImplementedError("Method not implemented for %r" % 
+        raise NotImplementedError("Method not implemented for %r" %
                                                             self.__class__)
     @classmethod
     def loadNode(cls, node, id_cache=None):
@@ -98,9 +99,9 @@ class HasPython(object):
         if hasattr(self, 'enabled_methods'):
             methods = [m for m in methods if m[0] in self.enabled_methods]
         method_string = "\n".join(
-            "    def {0}({1}):\n{2}        pass".format(method, 
+            "    def {0}({1}):\n{2}        pass".format(method,
                                                         ", ".join(args),
-                                                        "        {0}\n".format(repr(doc)) 
+                                                        "        {0}\n".format(repr(doc))
                                                                                if doc
                                                                                else '')
                 for method, doc, args in methods
@@ -108,14 +109,14 @@ class HasPython(object):
         init_code = getattr(self, '__init_code__', '')
         if init_code:
             method_string = "    def __init__(self):\n{0}\n{1}".format(
-                    "\n".join("        "+ line 
-                        for line in init_code), 
+                    "\n".join("        "+ line
+                        for line in init_code),
                     method_string)
         if not method_string:
             method_string = "    pass"
         comment_or_doc = '    # {0}'.format(self.__class__.__name__)
         if hasattr(self, 'id'):
-            comment_or_doc = '    """Implementation for {0} ({1})"""'.format(self.id, 
+            comment_or_doc = '    """Implementation for {0} ({1})"""'.format(self.id,
                                                                              self.__class__.__name__)
         else:
             print "NO ID", dir(self)
@@ -124,7 +125,7 @@ class HasPython(object):
 class RefID(object):
     def refNode(self, parent):
         return xml.etree.ElementTree.SubElement(parent,
-                                                self.__class__.__name__, 
+                                                self.__class__.__name__,
                                                 {'refID': self.id})
 
 class Command(RefID):
@@ -186,7 +187,7 @@ class Extension(XMLAttrMap, HasPython):
         self.enabled = True
         self.enabled_methods = [] #[m[0] for m in self.__python_methods__]
     def xmlNode(self, parent):
-        newnode = xml.etree.ElementTree.SubElement(parent, 
+        newnode = xml.etree.ElementTree.SubElement(parent,
                                                    self.__class__.__name__)
         self.addAttrMap(newnode)
         return newnode
@@ -202,7 +203,7 @@ class ControlContainer(XMLAttrMap):
             else:
                 item.xmlNode(elt)
     def xmlNode(self, parent):
-        newnode = xml.etree.ElementTree.SubElement(parent, 
+        newnode = xml.etree.ElementTree.SubElement(parent,
                                                    self.__class__.__name__)
         self.addAttrMap(newnode)
         self.addItemsToNode(newnode)
@@ -210,7 +211,7 @@ class ControlContainer(XMLAttrMap):
 @XMLSerializable.registerType
 class Menu(ControlContainer, RefID):
     "Menu"
-    __attr_map__ = {'caption': 'caption', 
+    __attr_map__ = {'caption': 'caption',
                     'isRootMenu': 'top_level',
                     'isShortcutMenu': 'shortcut_menu',
                     'separator': 'separator',
@@ -331,7 +332,7 @@ class ComboBox(Button):
 @XMLSerializable.registerType
 class Tool(Button):
     "Python Tool"
-    __init_code__ = ['self.enabled = True', 
+    __init_code__ = ['self.enabled = True',
                      'self.shape = "NONE" # Can set to "Line", '
                                             '"Circle" or "Rectangle" '
                                             'for interactive shape drawing '
@@ -535,8 +536,9 @@ class PythonAddin(object):
         xml.etree.ElementTree.SubElement(root, 'Company').text = self.company
         xml.etree.ElementTree.SubElement(root, 'Date').text = datetime.datetime.now().strftime("%m/%d/%Y")
         targets = xml.etree.ElementTree.SubElement(root, 'Targets')
-        target = xml.etree.ElementTree.SubElement(targets, 'Target', {'name': "Desktop", 'version': "10.1"})
-        addinnode = xml.etree.ElementTree.SubElement(root, 'AddIn', {'language': 'PYTHON', 
+        arcgis_version = '10.2'
+        target = xml.etree.ElementTree.SubElement(targets, 'Target', {'name': "Desktop", 'version': arcgis_version})
+        addinnode = xml.etree.ElementTree.SubElement(root, 'AddIn', {'language': 'PYTHON',
                                                                      'library': self.addinfile,
                                                                      'namespace': self.namespace})
 
@@ -598,7 +600,9 @@ class PythonAddinProjectDirectory(object):
                 self.addin = PythonAddin.fromXML(os.path.join(self._path, 'config.xml'), backup_files)
                 self.warning = getattr(self.addin, 'warning', None)
         else:
-            addin_name = ''.join(x for x in os.path.basename(path) if x.isalpha())
+            # Fix for NIM092018
+            ##addin_name = ''.join(x for x in os.path.basename(path) if x.isalpha())
+            addin_name = os.path.basename(path)
             self.addin = PythonAddin("Python Addin", "New Addin", (addin_name if addin_name else 'python') + "_addin",
                                      backup_files = True)
     def save(self):
@@ -634,11 +638,11 @@ class PythonAddinProjectDirectory(object):
 
         # Consolidate images
         seen_images = filter(bool, seen_images)
-        full_path = dict((image, 
+        full_path = dict((image,
                           os.path.abspath(
-                              os.path.join(self._path, image))) 
+                              os.path.join(self._path, image)))
                           for image in seen_images)
-        to_relocate = set(image_file for (image_name, image_file) 
+        to_relocate = set(image_file for (image_name, image_file)
                             in full_path.iteritems()
                                 if os.path.dirname(image_file) != images_dir)
         relocated_images = {}
@@ -653,7 +657,7 @@ class PythonAddinProjectDirectory(object):
                     num += 1
             relocated_images[image_file] = new_filename
             shutil.copyfile(image_file, os.path.join(self._path, 'Images', new_filename))
-        for item_with_image in (item for item in 
+        for item_with_image in (item for item in
                                     ([self.addin] + list(self.addin))
                                         if getattr(item, 'image', '')):
             item_image = item_with_image.image

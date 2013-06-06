@@ -1,4 +1,3 @@
-import imp
 import datetime
 import itertools
 import random
@@ -10,6 +9,7 @@ import time
 import uuid
 import xml.etree.ElementTree
 import xml.dom.minidom
+import _winreg
 
 NAMESPACE = "{http://schemas.esri.com/Desktop/AddIns}"
 
@@ -36,7 +36,7 @@ class XMLSerializable(object):
     __registry__ = {}
     def xmlNode(self, parent_node):
         raise NotImplementedError("Method not implemented for %r" %
-                                                            self.__class__)
+                                  self.__class__)
     @classmethod
     def loadNode(cls, node, id_cache=None):
         tagname = node.tag[len(NAMESPACE):]

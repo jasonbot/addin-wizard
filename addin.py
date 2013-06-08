@@ -13,6 +13,17 @@ import _winreg
 
 NAMESPACE = "{http://schemas.esri.com/Desktop/AddIns}"
 
+def CURRENT_VERSION():
+    ten_two_keys = ((_winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Wow6432Node\ESRI\Desktop10.2"),
+                    (_winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\ESRI\Desktop10.2"))
+    for version_key in ten_two_keys:
+        try:
+            _winreg.OpenKey(*version_key)
+            return "10.2"
+        except WindowsError:
+            pass
+    return "10.1"
+
 def makeid(prefix="id", seen=set()):
     if prefix[-1].isdigit():
         newnum = int(''.join(char for char in prefix if char.isdigit()))
@@ -536,7 +547,7 @@ class PythonAddin(object):
         xml.etree.ElementTree.SubElement(root, 'Company').text = self.company
         xml.etree.ElementTree.SubElement(root, 'Date').text = datetime.datetime.now().strftime("%m/%d/%Y")
         targets = xml.etree.ElementTree.SubElement(root, 'Targets')
-        arcgis_version = '10.2'
+        arcgis_version = CURRENT_VERSION()
         target = xml.etree.ElementTree.SubElement(targets, 'Target', {'name': "Desktop", 'version': arcgis_version})
         addinnode = xml.etree.ElementTree.SubElement(root, 'AddIn', {'language': 'PYTHON',
                                                                      'library': self.addinfile,

@@ -32,7 +32,7 @@ class AddinMakerWindow(wx.Frame):
         self.folder_label = wx.StaticText(self.project_settings_pane, -1, "Working Folder:", style=wx.ALIGN_RIGHT)
         self.folder_button = wx.Button(self.project_settings_pane, -1, "Select Folder...")
         self.product_label = wx.StaticText(self.project_settings_pane, -1, "Select Product:", style=wx.ALIGN_RIGHT)
-        self.product_combo_box = wx.combo_box(self.project_settings_pane, -1, choices=["ArcMap", "ArcGlobe", "ArcScene", "ArcCatalog"], style=wx.CB_DROPDOWN|wx.CB_READONLY)
+        self.product_combo_box = wx.ComboBox(self.project_settings_pane, -1, choices=["ArcMap", "ArcGlobe", "ArcScene", "ArcCatalog"], style=wx.CB_DROPDOWN|wx.CB_READONLY)
         self.static_line_1 = wx.StaticLine(self.project_settings_pane, -1)
         self.project_name_label = wx.StaticText(self.project_settings_pane, -1, "Name*:", style=wx.ALIGN_RIGHT)
         self.project_name = wx.TextCtrl(self.project_settings_pane, -1, "")
@@ -56,8 +56,8 @@ class AddinMakerWindow(wx.Frame):
         self.__set_properties()
         self.__do_layout()
 
-        self.Bind(wx.EVT_BUTTON, self.select_folder, self.folder_button)
-        self.Bind(wx.EVT_COMBOBOX, self.combo_box, self.product_combo_box)
+        self.Bind(wx.EVT_BUTTON, self.SelectFolder, self.folder_button)
+        self.Bind(wx.EVT_COMBOBOX, self.ComboBox, self.product_combo_box)
         self.Bind(wx.EVT_TEXT_ENTER, self.ProjectNameText, self.project_name)
         self.Bind(wx.EVT_TEXT, self.ProjectNameText, self.project_name)
         self.Bind(wx.EVT_TEXT_ENTER, self.ProjectVersionText, self.project_version)
@@ -178,12 +178,12 @@ class AddinMakerWindow(wx.Frame):
         self.Centre()
         # end wxGlade
 
-    def select_folder(self, event): # wxGlade: AddinMakerWindow.<event_handler>
-        print "Event handler `select_folder' not implemented!"
+    def SelectFolder(self, event): # wxGlade: AddinMakerWindow.<event_handler>
+        print "Event handler `SelectFolder' not implemented!"
         event.Skip()
 
-    def combo_box(self, event): # wxGlade: AddinMakerWindow.<event_handler>
-        print "Event handler `combo_box' not implemented!"
+    def ComboBox(self, event): # wxGlade: AddinMakerWindow.<event_handler>
+        print "Event handler `ComboBox' not implemented!"
         event.Skip()
 
     def ProjectNameText(self, event): # wxGlade: AddinMakerWindow.<event_handler>

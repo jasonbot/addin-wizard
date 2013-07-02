@@ -1,3 +1,4 @@
+# coding: utf-8
 import datetime
 import itertools
 import random
@@ -592,7 +593,7 @@ class PythonAddin(object):
                 yield aitem
     @property
     def python(self):
-        return ("import arcpy\nimport pythonaddins\n\n" +
+        return ("# coding: utf-8\nimport arcpy\nimport pythonaddins\n\n" +
                 "\n\n".join(
                             sorted(
                                 set(x.python for x in self if hasattr(x, 'python')))))

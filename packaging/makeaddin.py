@@ -1,10 +1,11 @@
+# coding: utf-8
 import os
 import re
 import zipfile
 
 current_path = os.path.dirname(os.path.abspath(__file__))
 
-out_zip_name = os.path.join(current_path, 
+out_zip_name = os.path.join(current_path,
                             os.path.basename(current_path) + ".esriaddin")
 
 BACKUP_FILE_PATTERN = re.compile(".*_addin_[0-9]+[.]py$", re.IGNORECASE)
@@ -14,7 +15,9 @@ def looks_like_a_backup(filename):
 
 with zipfile.ZipFile(out_zip_name, 'w', zipfile.ZIP_DEFLATED) as zip_file:
     for filename in ('config.xml', 'README.txt', 'makeaddin.py'):
-        zip_file.write(os.path.join(current_path, filename), filename)
+        full_filename = os.path.join(current_path, filename)
+        if os.path.exists(full_filename):
+            zip_file.write(full_filename, filename)
     dirs_to_add = ['Images', 'Install']
     for directory in dirs_to_add:
         for (path, dirs, files) in os.walk(os.path.join(current_path,

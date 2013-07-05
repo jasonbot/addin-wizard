@@ -244,7 +244,6 @@ class ToolPalette(ControlContainer, UIControl):
     __attr_map__ = {'columns': 'columns',
                     'canTearOff': 'tearoff',
                     'isMenuStyle': 'menu_style',
-                    'separator': 'hasSeparator',
                     'category': 'category',
                     'id': 'id'}
     def __init__(self, caption=None, columns=2, tearoff=False, menu_style=False, category=None, id=None):
@@ -277,7 +276,6 @@ class Button(XMLAttrMap, UIControl):
     __init_code__ = ['self.enabled = True', 'self.checked = False']
     __attr_map__ = {'caption': 'caption' ,
                     'class': 'klass',
-                    'separator': 'hasSeparator',
                     'category': 'category',
                     'image': 'image' ,
                     'tip': 'tip' ,
@@ -288,7 +286,6 @@ class Button(XMLAttrMap, UIControl):
                  tip=None, message=None, id=None):
         self.caption = caption or "Button"
         self.klass = klass or makeid("ButtonClass")
-        self.separator = False
         self.category = category or ''
         self.image = image or ''
         self.tip = tip or ''
@@ -309,7 +306,6 @@ class ComboBox(Button):
     "Combo Box"
     __attr_map__ = {'caption': 'caption',
                     'category': 'category',
-                    'separator': 'hasSeparator',
                     'id': 'id',
                     'class': 'klass',
                     'tip': 'tip',
@@ -335,7 +331,6 @@ class ComboBox(Button):
         self.id = id or makeid("combo_box")
         self.category = category or ''
         self.caption = caption or "ComboBox"
-        self.separator = False
         self.message = ''
         self.tip = ''
         self.help_heading = ''

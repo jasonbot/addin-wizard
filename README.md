@@ -1,6 +1,8 @@
-# addin-wizard
+# Python Add-In Wizard
 
-The Python Add-In Wizard for ArcGIS 10.1/10.2.
+This is the application linked to in the help for creating Python Add-Ins in ArcGIS 10.1/10.2. It's a simple wxPython app bundled with py2exe, so it should act as a good example to learn from for doing that, too.
+
+This app does not require ArcGIS in any way to function, nor does it import or use arcpy/arcgisscripting in any way. It's just a UI to make boilerplate `.xml`/`.py` files.
 
 ## Issues
 

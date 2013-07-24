@@ -4,14 +4,6 @@ This is the application linked to in the help for creating Python Add-Ins in Arc
 
 This app does not require ArcGIS in any way to function, nor does it import or use arcpy/arcgisscripting in any way. It's just a UI to make boilerplate `.xml`/`.py` files.
 
-## Issues
-
-Find a bug or want to request a new feature?  Please let us know by submitting an issue.
-
-## Contributing
-
-Anyone and everyone is welcome to contribute. 
-
 ## Licensing
 Copyright 2013 Esri
 

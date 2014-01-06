@@ -189,7 +189,13 @@ class Extension(XMLAttrMap, HasPython):
     @property
     def __init_code__(self):
         return ['# For performance considerations, please remove all unused methods in this class.',
-                'self.enabled = {}'.format(repr(self.enabled))]
+                'self.enabled = {}'.format(repr(self.enabled)),
+                '# Starting in 10.,3, these attributes will be populated '
+                'when edit events are triggered',
+                'self.editWorkspace = None  # String with workspace path',
+                'self.currentLayer = None   # arcpy.mapping.Layer of edit layer',
+                'self.currentFeature = None # arcpy.Geometry',
+                'self.editSelection = None  # List of OIDs as ints']
     def __init__(self, name=None, description=None, klass=None, id=None, category=None):
         self.name = name or 'New Extension'
         self.description = description or ''

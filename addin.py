@@ -47,8 +47,8 @@ class DelayedGetter(object):
 class XMLSerializable(object):
     __registry__ = {}
     def xmlNode(self, parent_node):
-        raise NotImplementedError("Method not implemented for %r" %
-                                  self.__class__)
+        raise NotImplementedError("Method not implemented for {}".format(
+                                  repr(self.__class__)))
     @classmethod
     def loadNode(cls, node, id_cache=None):
         tagname = node.tag[len(NAMESPACE):]
@@ -59,7 +59,8 @@ class XMLSerializable(object):
                 return DelayedGetter(node.attrib['refID'], id_cache)
         elif tagname in cls.__registry__:
             return cls.__registry__[tagname].fromNode(node, id_cache)
-        raise NotImplementedError("Deserialization not implemented for %r" % cls)
+        raise NotImplementedError(
+                "Deserialization not implemented for {}".format(repr(cls)))
     @classmethod
     def registerType(cls, klass):
         cls.__registry__[klass.__name__] = klass
@@ -188,7 +189,7 @@ class Extension(XMLAttrMap, HasPython):
     @property
     def __init_code__(self):
         return ['# For performance considerations, please remove all unused methods in this class.',
-                'self.enabled = %r' % self.enabled]
+                'self.enabled = {}'.format(repr(self.enabled))]
     def __init__(self, name=None, description=None, klass=None, id=None, category=None):
         self.name = name or 'New Extension'
         self.description = description or ''
@@ -316,10 +317,10 @@ class ComboBox(Button):
     @property
     def __init_code__(self):
         return ['self.items = ["item1", "item2"]',
-                'self.editable = %r' % self.editable,
+                'self.editable = {}'.format(repr(self.editable)),
                 'self.enabled = True',
-                'self.dropdownWidth = %r' % self.item_size_string,
-                'self.width = %r' % self.size_string]
+                'self.dropdownWidth = {}'.format(repr(self.item_size_string)),
+                'self.width = {}'.format(repr(self.size_string))]
     __python_methods__ = [('onSelChange',  '', ['self', 'selection']),
                           ('onEditChange', '', ['self', 'text']),
                           ('onFocus', '', ['self', 'focused']),
@@ -404,7 +405,7 @@ class PythonAddin(object):
         self.company = company
         assert app in self.__apps__
         self.app = app
-        self.guid = "{%s}" % uuid.uuid4()
+        self.guid = "{{{}}}".format(uuid.uuid4())
         self.version = version
         self.image = image
         self.addinfile = self.namespace + '.py'

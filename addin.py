@@ -15,12 +15,14 @@ import _winreg
 NAMESPACE = "{http://schemas.esri.com/Desktop/AddIns}"
 
 def CURRENT_VERSION():
-    ten_two_keys = ((_winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Wow6432Node\ESRI\Desktop10.2"),
-                    (_winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\ESRI\Desktop10.2"))
-    for version_key in ten_two_keys:
+    version_keys = (((_winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Wow6432Node\ESRI\Desktop10.3"), "10.3"),
+                    ((_winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\ESRI\Desktop10.3"), "10.3"),
+                    ((_winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Wow6432Node\ESRI\Desktop10.2"), "10.2"),
+                    ((_winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\ESRI\Desktop10.2"), "10.2"))
+    for version_key, version_string in version_keys:
         try:
             _winreg.OpenKey(*version_key)
-            return "10.2"
+            return version_string
         except WindowsError:
             pass
     return "10.1"
@@ -319,7 +321,8 @@ class ComboBox(Button):
                     'message': 'message',
                     'sizeString': 'size_string',
                     'itemSizeString': 'item_size_string',
-                    'rows': 'rows'}
+                    'rows': 'rows',
+                    'hint_text': 'hint'}
     @property
     def __init_code__(self):
         return ['self.items = ["item1", "item2"]',

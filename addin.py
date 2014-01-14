@@ -18,14 +18,17 @@ def CURRENT_VERSION():
     version_keys = (((_winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Wow6432Node\ESRI\Desktop10.3"), "10.3"),
                     ((_winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\ESRI\Desktop10.3"), "10.3"),
                     ((_winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Wow6432Node\ESRI\Desktop10.2"), "10.2"),
-                    ((_winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\ESRI\Desktop10.2"), "10.2"))
+                    ((_winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\ESRI\Desktop10.2"), "10.2"),
+                    ((_winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Wow6432Node\ESRI\Desktop10.1"), "10.1"),
+                    ((_winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\ESRI\Desktop10.1"), "10.1"))
     for version_key, version_string in version_keys:
         try:
             _winreg.OpenKey(*version_key)
             return version_string
         except WindowsError:
             pass
-    return "10.1"
+    # Default to latest version
+    return version_keys[0][1]
 
 def makeid(prefix="id", seen=set()):
     if prefix[-1].isdigit():

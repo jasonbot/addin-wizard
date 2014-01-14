@@ -133,8 +133,6 @@ class HasPython(object):
         if hasattr(self, 'id'):
             comment_or_doc = '    """Implementation for {0} ({1})"""'.format(self.id,
                                                                              self.__class__.__name__)
-        else:
-            print "NO ID", dir(self)
         return "class {0}(object):\n{1}\n{2}".format(self.klass, comment_or_doc, method_string)
 
 class RefID(object):
@@ -190,8 +188,11 @@ class Extension(XMLAttrMap, HasPython):
                           ('onRedo', '', ['self'])]
     @property
     def __init_code__(self):
-        return ['# For performance considerations, please remove all unused methods in this class.',
+        return ['# For optimal performance, please remove all unused methods '
+                'in this class.',
+
                 'self.enabled = {}'.format(repr(self.enabled)),
+
                 '# Starting in 10.,3, these attributes will be populated '
                 'when edit events are triggered',
                 'self.editWorkspace = None  # String with workspace path',
@@ -206,7 +207,7 @@ class Extension(XMLAttrMap, HasPython):
         self.category = category or ''
         self.show_in_dialog = True
         self.enabled = True
-        self.enabled_methods = [] #[m[0] for m in self.__python_methods__]
+        self.enabled_methods = []
     def xmlNode(self, parent):
         newnode = xml.etree.ElementTree.SubElement(parent,
                                                    self.__class__.__name__)
@@ -556,41 +557,38 @@ class PythonAddin(object):
         xml.etree.ElementTree.SubElement(root, 'Image').text = self.image
         xml.etree.ElementTree.SubElement(root, 'Author').text = self.author
         xml.etree.ElementTree.SubElement(root, 'Company').text = self.company
-        xml.etree.ElementTree.SubElement(root, 'Date').text = datetime.datetime.now().strftime("%m/%d/%Y")
+        now = datetime.datetime.now().strftime("%m/%d/%Y")
+        xml.etree.ElementTree.SubElement(root, 'Date').text = now
         targets = xml.etree.ElementTree.SubElement(root, 'Targets')
         arcgis_version = CURRENT_VERSION()
-        target = xml.etree.ElementTree.SubElement(targets, 'Target', {'name': "Desktop", 'version': arcgis_version})
-        addinnode = xml.etree.ElementTree.SubElement(root, 'AddIn', {'language': 'PYTHON',
-                                                                     'library': self.addinfile,
-                                                                     'namespace': self.namespace})
+        target = xml.etree.ElementTree.SubElement(targets,
+                                                  'Target',
+                                                  {'name': "Desktop",
+                                                   'version': arcgis_version})
+        addinnode = xml.etree.ElementTree.SubElement(root,
+                                                     'AddIn',
+                                                     {'language': 'PYTHON',
+                                                      'library': self.addinfile,
+                                                      'namespace': 
+                                                        self.namespace})
 
         self.fixids()
 
         appnode = xml.etree.ElementTree.SubElement(addinnode, self.app)
-        appnode.text = "\n    "
         commandnode = xml.etree.ElementTree.SubElement(appnode, 'Commands')
-        commandnode.text = "\n        "
         for command in self.commands:
             command.xmlNode(commandnode)
-        commandnode.tail = "\n    "
         extensionnode = xml.etree.ElementTree.SubElement(appnode, 'Extensions')
-        extensionnode.text = "\n        "
         for extension in self.extensions:
             extension.xmlNode(extensionnode)
-        extensionnode.tail = "\n    "
         toolbarnode = xml.etree.ElementTree.SubElement(appnode, 'Toolbars')
-        toolbarnode.text = "\n        "
         for toolbar in self.toolbars:
             toolbar.xmlNode(toolbarnode)
-        toolbarnode.tail = "\n    "
         menunode = xml.etree.ElementTree.SubElement(appnode, 'Menus')
-        menunode.text = "\n        "
         for menu in self.allmenus:
             menu.xmlNode(menunode)
-        menunode.tail = "\n    "
         markup = xml.etree.ElementTree.tostring(root).encode("utf-8")
-        return markup
-        #return xml.dom.minidom.parseString(markup).toprettyxml("    ")
+        return xml.dom.minidom.parseString(markup).toprettyxml("    ")
     def __iter__(self):
         def ls_(item):
             if hasattr(item, 'items'):
@@ -606,25 +604,37 @@ class PythonAddin(object):
         return ("# coding: utf-8\nimport arcpy\nimport pythonaddins\n\n" +
                 "\n\n".join(
                             sorted(
-                                set(x.python for x in self if hasattr(x, 'python')))))
+                                set(x.python 
+                                    for x in self
+                                    if hasattr(x, 'python')))))
 
 class PythonAddinProjectDirectory(object):
     def __init__(self, path, backup_files = False):
         self._path = path
         self.backup_files = backup_files
         if not os.path.exists(path):
-            raise IOError(u"{0} does not exist. Please select a directory that exists.".format(path))
+            raise IOError(u"{0} does not exist. Please select a "
+                          u"directory that exists.".format(path))
         listing = os.listdir(path)
         if listing:
-            if not all(item in listing for item in ('config.xml', 'Install', 'Images')):
-                raise ValueError(u"{0} is not empty. Please select an empty directory to host this new addin.".format(path))
+            if not all(item in listing for item in ('config.xml',
+                                                    'Install',
+                                                    'Images')):
+                raise ValueError(u"{0} is not empty. Please select an empty "
+                                 u"directory to host this new "
+                                 u"addin.".format(path))
             else:
-                self.addin = PythonAddin.fromXML(os.path.join(self._path, 'config.xml'), backup_files)
+                self.addin = PythonAddin.fromXML(os.path.join(self._path,
+                                                              'config.xml'),
+                                                 backup_files)
                 self.warning = getattr(self.addin, 'warning', None)
         else:
             # Fix for NIM092018
             addin_name = os.path.basename(path)
-            self.addin = PythonAddin("Python Addin", "New Addin", (addin_name if addin_name else 'python') + "_addin",
+            self.addin = PythonAddin("Python Addin",
+                                     "New Addin",
+                                     (addin_name if addin_name 
+                                                 else 'python') + "_addin",
                                      backup_files = True)
     def save(self):
         # Make install/images dir
@@ -643,7 +653,9 @@ class PythonAddinProjectDirectory(object):
                                      'packaging')
         for filename in os.listdir(packaging_dir):
             if not os.path.exists(os.path.join(self._path, filename)):
-                shutil.copyfile(os.path.join(packaging_dir, filename), os.path.join(self._path, filename))
+                shutil.copyfile(os.path.join(packaging_dir,
+                                             filename),
+                                os.path.join(self._path, filename))
 
         # For consolidating images
         seen_images = set([self.addin.image])
@@ -663,9 +675,9 @@ class PythonAddinProjectDirectory(object):
                           os.path.abspath(
                               os.path.join(self._path, image)))
                           for image in seen_images)
-        to_relocate = set(image_file for (image_name, image_file)
-                            in full_path.iteritems()
-                                if os.path.dirname(image_file) != images_dir)
+        to_relocate = set(image_file
+                          for (image_name, image_file) in full_path.iteritems()
+                          if os.path.dirname(image_file) != images_dir)
         relocated_images = {}
         image_files = set(x.lower() for x in os.listdir(images_dir))
         for image_file in to_relocate:
@@ -677,18 +689,25 @@ class PythonAddinProjectDirectory(object):
                     new_filename = fn + "_" + str(num) + format
                     num += 1
             relocated_images[image_file] = new_filename
-            shutil.copyfile(image_file, os.path.join(self._path, 'Images', new_filename))
-        for item_with_image in (item for item in
-                                    ([self.addin] + list(self.addin))
-                                        if getattr(item, 'image', '')):
+            shutil.copyfile(image_file, os.path.join(self._path,
+                                                     'Images',
+                                                     new_filename))
+        for item_with_image in (item
+                                for item in ([self.addin] + list(self.addin))
+                                if getattr(item, 'image', '')):
             item_image = item_with_image.image
             if item_image in relocated_images:
-                item_with_image.image = os.path.join('Images', relocated_images[item_image])
+                item_with_image.image = os.path.join('Images',
+                                                     relocated_images[
+                                                         item_image])
             else:
-                item_with_image.image = os.path.join('Images', os.path.basename(item_image))
+                item_with_image.image = os.path.join('Images',
+                                                     os.path.basename(
+                                                         item_image))
 
         # Back up .py file if necessary
         filename = self.addin.backup()
+
         # Output XML and Python stub
         with open(os.path.join(self._path, 'config.xml'), 'wb') as out_handle:
             out_handle.write(self.addin.xml)

@@ -23,7 +23,7 @@ def CURRENT_VERSION():
                     ((_winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\ESRI\Desktop10.1"), "10.1"))
     for version_key, version_string in version_keys:
         try:
-            _winreg.OpenKey(*version_key)
+            _winreg.CloseKey(_winreg.OpenKey(*version_key))
             return version_string
         except WindowsError:
             pass

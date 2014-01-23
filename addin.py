@@ -162,6 +162,7 @@ class Extension(XMLAttrMap, HasPython):
                     'showInExtensionDialog': 'show_in_dialog',
                     'autoLoad': 'enabled'}
     __python_methods__ = [('startup', '', ['self']),
+                          ('shutdown', '', ['self']),
                           ('activeViewChanged', '', ['self']),
                           ('mapsChanged', '', ['self']),
                           ('newDocument', '', ['self']),

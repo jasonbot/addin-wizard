@@ -585,8 +585,7 @@ class AddinMakerAppWindow(addin_ui.AddinMakerWindow):
             menu.Destroy()
 
 if __name__ == "__main__":
-    app = wx.PySimpleApp(0)
-    wx.InitAllImageHandlers()
+    app = wx.App(redirect=False)
     addin_window = AddinMakerAppWindow(None, -1)
     app.SetTopWindow(addin_window)
     addin_window.Show()

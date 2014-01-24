@@ -81,7 +81,6 @@ class XMLAttrMap(XMLSerializable):
                 else:
                     value = unicode(value)
                 node.attrib[attr_node] = value
-        node.tail = "\n        "
     @classmethod
     def fromNode(cls, node, id_cache=None):
         instance = cls()

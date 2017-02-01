@@ -15,9 +15,9 @@ import _winreg
 NAMESPACE = "{http://schemas.esri.com/Desktop/AddIns}"
 
 def CURRENT_VERSION():
-    version_keys = (((_winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Wow6432Node\ESRI\Desktop10.3"), "10.4"),
-                    ((_winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\ESRI\Desktop10.3"), "10.4"),
-                    ((_winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Wow6432Node\ESRI\Desktop10.3"), "10.3"),
+    version_keys = (((_winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Wow6432Node\ESRI\Desktop10.4"), "10.4"),
+                    ((_winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\ESRI\Desktop10.4"), "10.4"),
+                    ((_winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Wow6432Node\ESRI\Desktop10.4"), "10.3"),
                     ((_winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\ESRI\Desktop10.3"), "10.3"),
                     ((_winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Wow6432Node\ESRI\Desktop10.2"), "10.2"),
                     ((_winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\ESRI\Desktop10.2"), "10.2"),

@@ -1,4 +1,4 @@
-**NOTE**: This repository is no longer actively maintained as I am no longer an employee at Esri and do not have active access to Windows or any ArcGIS products. Hopefully you can get support at [Esri's official help forum](https://geonet.esri.com/groups/python-addins).
+# **NOTE**: This repository is no longer actively maintained as I am no longer an employee at Esri and do not have active access to Windows or any ArcGIS products. Hopefully you can get support at [Esri's official help forum](https://geonet.esri.com/groups/python-addins).
 
 # Python Add-In Wizard
 
